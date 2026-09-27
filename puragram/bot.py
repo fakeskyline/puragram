@@ -10,6 +10,7 @@ from .api import TelegramAPI
 from .exceptions import TelegramError, SecurityError
 from .filters import _ensure as _ensure_filter, build_named
 from .fsm import FSMContext, MemoryStorage
+from .conversation import ConversationManager
 from .logger import get_logger
 from .security import safe_path, check_size, validate_text
 from .types import Message, Update, User
@@ -101,6 +102,7 @@ class Bot:
         self._executor = None
         self._dedup = _DedupCache()
         self._allowed_updates_override = allowed_updates
+        self.conversations = ConversationManager(self)
 
     # ─────────── Реєстрація хендлерів ───────────
 
@@ -132,6 +134,25 @@ class Bot:
 
     def inline_query_handler(self, *filters, state=None, **named):
         return self._register("inline_query", filters, state, named)
+
+    def conversation(self, *filters, timeout=300, **named):
+        """Register a conversation entry point.
+
+        Usage:
+            @bot.conversation(commands=["start"], timeout=300)
+            def reg(conv):
+                name = yield "Your name?"
+                conv.reply(f"Hi {name}!")
+        """
+        f = build_named(**named)
+        for cf in filters:
+            cf = _ensure_filter(cf)
+            f = cf if f is None else (f & cf)
+
+        def deco(func):
+            self.conversations.add_entry(f, timeout, func)
+            return func
+        return deco
 
     def middleware(self, mw):
         self._middlewares.append(mw)
@@ -456,6 +477,20 @@ class Bot:
     # ─────────── Диспетчер ───────────
 
     def _dispatch(self, update):
+        msg = update.message
+        if msg is not None and self.conversations.has_entries:
+            text = getattr(msg, "text", None) or ""
+            if text.startswith("/cancel"):
+                if self.conversations.cancel(msg):
+                    return
+            if self.conversations.has_active(msg):
+                if self.conversations.resume(msg):
+                    return
+            for entry in self.conversations.entries():
+                if entry.entry_filter is None or entry.entry_filter(msg):
+                    self.conversations.start(msg, entry)
+                    return
+
         pairs = (
             ("message", update.message),
             ("edited_message", update.edited_message),

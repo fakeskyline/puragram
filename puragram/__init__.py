@@ -28,6 +28,7 @@ from .middleware import (
     BaseMiddleware, LoggingMiddleware, ThrottlingMiddleware,
     TimingMiddleware,
 )
+from .conversation import ConversationContext, ConversationCancelled
 from .webhook import WebhookServer
 from .utils import (
     chunked, escape_html, escape_markdown, safe_text,
@@ -41,7 +42,7 @@ from .security import (
     MAX_UPLOAD_BYTES, MAX_WEBHOOK_BYTES, MAX_REGEX_LEN,
 )
 
-__version__ = "1.1.2"
+__version__ = "1.2.0"
 
 __all__ = [
     "Bot", "TelegramAPI",
@@ -61,6 +62,7 @@ __all__ = [
     "BaseMiddleware", "LoggingMiddleware", "ThrottlingMiddleware",
     "TimingMiddleware",
     "WebhookServer",
+    "ConversationContext", "ConversationCancelled",
     "escape_html", "escape_markdown", "safe_text",
     "split_message", "chunked", "user_mention", "truncate",
     "redact", "mask_token", "safe_path", "safe_filename",

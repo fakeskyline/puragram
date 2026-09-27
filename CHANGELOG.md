@@ -3,6 +3,32 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] — 2026-09-27
+
+### Added
+
+- **Conversation handler** — multi-step dialogs via Python generators:
+
+  ```python
+  @bot.conversation(commands=["start"], timeout=300)
+  def reg(conv):
+      name = yield "What's your name?"
+      age = yield f"Hi {name}! How old are you?"
+      conv.reply(f"Nice to meet you, {name} ({age})!")
+```
+
+· /cancel command automatically stops an active conversation
+· ConversationContext — access to bot, chat_id, user_id, data,
+  reply(), cancel()
+· ConversationCancelled exception — raise inside a conversation to
+  stop it cleanly and notify the user
+· Configurable timeout per conversation (default 300 seconds)
+
+Notes
+
+· Conversations are stored in memory only. Restarting the bot cancels
+  all active conversations.
+
 ## [1.1.2] — 2026-09-27
 
 ### Changed
