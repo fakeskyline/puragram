@@ -78,13 +78,19 @@ class _Handler:
 
 class Bot:
     def __init__(self, token, parse_mode=None, disable_web_page_preview=None,
-                 pool_size=10, timeout=30.0, retries=2, storage=None,
-                 file_base_dir=None, allowed_updates=None):
+                 pool_size=16, timeout=30.0, retries=0, storage=None,
+                 file_base_dir=None, allowed_updates=None,
+                 connect_timeout=5.0):
         self.token = token
         self.parse_mode = parse_mode
         self.disable_web_page_preview = disable_web_page_preview
-        self.api = TelegramAPI(token, pool_size=pool_size,
-                               timeout=timeout, retries=retries)
+        self.api = TelegramAPI(
+            token,
+            pool_size=pool_size,
+            timeout=timeout,
+            connect_timeout=connect_timeout,
+            retries=retries,
+        )
         self.fsm_storage = storage or MemoryStorage()
         self.file_base_dir = file_base_dir
         self._handlers = []

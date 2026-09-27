@@ -1,4 +1,5 @@
 import json
+import socket
 import urllib3
 
 from .exceptions import TelegramError, SecurityError
@@ -13,27 +14,47 @@ def _camel(name):
     return head + "".join(p.capitalize() for p in tail)
 
 
+_SOCKET_OPTIONS = [
+    (socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),
+    (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+]
+
+
 class TelegramAPI:
-    def __init__(self, token, pool_size=10, timeout=30.0, retries=2):
+    def __init__(self, token, pool_size=16, timeout=30.0,
+                 connect_timeout=5.0, retries=0):
         if not token or not isinstance(token, str):
             raise SecurityError("Token must be a non-empty string")
         if ":" not in token:
             raise SecurityError("Token has invalid format")
+
         self.token = token
         self.base_url = f"https://api.telegram.org/bot{token}"
         self.file_url = f"https://api.telegram.org/file/bot{token}"
+
+        if retries > 0:
+            retry_policy = urllib3.Retry(
+                retries,
+                backoff_factor=0.1,
+                status_forcelist=None,
+                connect=retries,
+                read=0,
+                redirect=0,
+                raise_on_status=False,
+            )
+        else:
+            retry_policy = False
+
         self._http = urllib3.PoolManager(
             num_pools=pool_size,
             maxsize=pool_size,
-            block=False,
-            timeout=urllib3.Timeout(connect=5.0, read=timeout),
-            retries=urllib3.Retry(
-                retries,
-                backoff_factor=0.3,
-                status_forcelist=[500, 502, 503, 504],
-                allowed_methods=frozenset(["GET", "POST"]),
-                raise_on_status=False,
+            block=True,
+            timeout=urllib3.Timeout(
+                connect=connect_timeout,
+                read=timeout,
             ),
+            retries=retry_policy,
+            socket_options=_SOCKET_OPTIONS,
         )
 
     def call(self, method, files=None, **params):

@@ -3,16 +3,33 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.1] — 2026-09-27
+
+### Changed
+
+- **Stability improvements** in `TelegramAPI`:
+  - `PoolManager(block=True)` — reuse connections instead of opening new ones
+  - `TCP_NODELAY` enabled — disables Nagle's algorithm for lower latency
+  - `SO_KEEPALIVE` enabled — keeps connections alive
+  - Separate `connect_timeout` (5s) and read timeout (30s)
+  - `retries=0` by default — no hidden retry delays on HTTP status codes
+  - `pool_size` default raised from 10 to 16
+
+### Notes
+
+- Benchmarking shows puragram is now more predictable on flaky networks.
+  For applications that need retry on connection failures, pass
+  `Bot(..., retries=2)` explicitly.
+
 ## [1.1.0] — 2026-09-27
 
 ### Added
 
-- Inline mode: `@bot.inline_query_handler()` and `bot.answer_inline_query()`
+- Inline mode: `@inline_query_handler()` and `bot.answer_inline_query()`
 - `InlineQueryResultArticle` and `InlineQueryResultPhoto` result types
 - New Bot methods: `send_poll`, `send_location`, `send_contact`, `send_dice`, `send_sticker`
 - `send_long_message` — auto-splits long messages using `split_message`
 - `CallbackDataPrefix` filter for prefix-matching callback data
-- `CallbackQuery.message` access helper
 
 ### Changed
 

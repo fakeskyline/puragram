@@ -71,4 +71,4 @@ check/
 *.whl
 *.tar.gz
 !dist/*.whl
-!dist/*.tar.gz
+!dist/*.tar.gzbench.py
