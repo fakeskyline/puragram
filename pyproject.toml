@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "puragram"
+version = "1.0.0"
+description = "Fast, dependency-light Telegram Bot API framework built on urllib3"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Maxim Zhovner", email = "zovnercukmaksim197@gmail.com" }
+]
+license = { text = "MIT" }
+keywords = ["telegram", "bot", "api", "urllib3", "framework"]
+dependencies = ["urllib3>=2.0"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications :: Chat",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["puragram*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
