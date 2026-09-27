@@ -122,6 +122,14 @@ class ConversationManager:
             if conv.expired():
                 log.info("conversation %s expired for %s", conv.name, key)
                 self._active.pop(key, None)
+                chat_id = event.chat.id if getattr(event, "chat", None) else 0
+                try:
+                    self.bot.send_message(
+                        chat_id,
+                        "Dialog timed out. Send the command again to restart.",
+                    )
+                except Exception:
+                    pass
                 return False
             return True
 
@@ -142,7 +150,7 @@ class ConversationManager:
             log.warning("conversation %s: function is not a generator", entry.name)
             return
 
-        timeout = entry.timeout if entry.timeout is not None else self.default_timeout
+        timeout = entry.timeout
 
         try:
             first = next(gen)

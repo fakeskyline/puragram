@@ -1036,8 +1036,25 @@ def calc(conv):
 
 Both work. Pick the one that makes your code shorter.
 
----
+### 16.9 Limitations
 
+- **In-memory only.** Conversations are stored in a dict, keyed by
+  `(chat_id, user_id)`. If the bot restarts, all active conversations
+  are lost. This is a deliberate trade-off: Python generators cannot
+  be serialized, so persisting a mid-conversation state would require
+  a fundamentally different design (state machine, not generator).
+
+  If you need a dialog that survives restarts, use **FSM** with
+  `FileStorage` or `SQLiteStorage` instead.
+
+- **One conversation per user.** A user cannot start a second
+  conversation while one is active. Send `/cancel` first.
+
+- **No nested conversations.** Calling `conv` from inside another
+  `conv` is not supported. Restructure the flow as a single generator
+  with branching.
+
+---
 
 ## 17. Further reading
 

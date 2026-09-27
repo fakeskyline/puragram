@@ -214,3 +214,163 @@ def test_cancel_from_inside():
     mgr.resume(_msg("quit"))
     assert (1, "Bye!") in bot.sent
     assert mgr.has_active(_msg("x")) is False
+
+
+# ─── Timeout notification ───
+
+def test_timeout_sends_notification(monkeypatch):
+    """When a conversation times out, the user gets a message."""
+    import time
+    bot = FakeBot()
+    mgr = ConversationManager(bot)
+
+    def flow(conv):
+        yield "step 1"
+
+    mgr.add_entry(None, 60, flow)
+    mgr.start(_msg("/start"), mgr.entries()[0])
+    assert bot.sent == [(1, "step 1")]
+
+    # Fake the timeout by making time.monotonic jump forward
+    original = time.monotonic
+    fake_now = [original() + 999]
+
+    def fake_monotonic():
+        return fake_now[0]
+
+    monkeypatch.setattr(
+        "puragram.conversation.time.monotonic", fake_monotonic
+    )
+
+    # has_active should detect expiry and notify
+    assert mgr.has_active(_msg("hello")) is False
+    assert (1, "Dialog timed out. Send the command again to restart.") in bot.sent
+
+
+def test_timeout_clears_active(monkeypatch):
+    """After timeout, the conversation slot is free for a new one."""
+    import time
+    bot = FakeBot()
+    mgr = ConversationManager(bot)
+
+    def flow(conv):
+        yield "step 1"
+
+    mgr.add_entry(None, 60, flow)
+    mgr.start(_msg("/start"), mgr.entries()[0])
+
+    fake_now = [time.monotonic() + 999]
+    monkeypatch.setattr(
+        "puragram.conversation.time.monotonic", lambda: fake_now[0]
+    )
+
+    mgr.has_active(_msg("x"))  # triggers cleanup
+    # Now the slot is free
+    assert mgr.has_active(_msg("x")) is False
+
+
+# ─── /cancel edge cases ───
+
+def test_cancel_outside_conversation():
+    """Calling /cancel when no conversation is active should not crash."""
+    bot = FakeBot()
+    mgr = ConversationManager(bot)
+
+    def flow(conv):
+        yield "step 1"
+
+    mgr.add_entry(None, 60, flow)
+    # No active conversation
+    result = mgr.cancel(_msg("/cancel"))
+    assert result is False
+    assert bot.sent == []
+
+
+def test_cancel_sends_custom_message():
+    """Cancelling sends the provided message to the user."""
+    bot = FakeBot()
+    mgr = ConversationManager(bot)
+
+    def flow(conv):
+        yield "step 1"
+
+    mgr.add_entry(None, 60, flow)
+    mgr.start(_msg("/start"), mgr.entries()[0])
+    bot.sent.clear()
+
+    mgr.cancel(_msg("/cancel"), message="Stopped by /cancel.")
+    assert bot.sent == [(1, "Stopped by /cancel.")]
+
+
+def test_cancel_and_restart():
+    """After cancel, a new conversation can start for the same user."""
+    bot = FakeBot()
+    mgr = ConversationManager(bot)
+
+    def flow(conv):
+        name = yield "Name?"
+        conv.reply(f"Hi {name}")
+
+    mgr.add_entry(None, 60, flow)
+    mgr.start(_msg("/start"), mgr.entries()[0])
+    mgr.cancel(_msg("/cancel"))
+    assert mgr.has_active(_msg("x")) is False
+
+    # Start again
+    bot.sent.clear()
+    mgr.start(_msg("/start"), mgr.entries()[0])
+    assert bot.sent == [(1, "Name?")]
+
+
+def test_cancel_from_second_step():
+    """Cancel works from any step of the conversation."""
+    bot = FakeBot()
+    mgr = ConversationManager(bot)
+
+    def flow(conv):
+        a = yield "Step 1?"
+        b = yield f"Got {a}. Step 2?"
+        conv.reply(f"Done: {a}, {b}")
+
+    mgr.add_entry(None, 60, flow)
+    mgr.start(_msg("/start"), mgr.entries()[0])
+    mgr.resume(_msg("first"))
+    # Now at step 2
+    assert mgr.has_active(_msg("x")) is True
+    mgr.cancel(_msg("/cancel"))
+    assert mgr.has_active(_msg("x")) is False
+
+
+def test_cancel_message_not_sent_when_no_active():
+    """If no active conversation, cancel does not send anything."""
+    bot = FakeBot()
+    mgr = ConversationManager(bot)
+
+    def flow(conv):
+        yield "x"
+
+    mgr.add_entry(None, 60, flow)
+    result = mgr.cancel(_msg("/cancel"), message="Nothing to cancel.")
+    assert result is False
+    assert bot.sent == []
+
+
+# ─── Timeout=None disables the timeout ───
+
+def test_no_timeout_does_not_expire(monkeypatch):
+    import time
+    bot = FakeBot()
+    mgr = ConversationManager(bot)
+
+    def flow(conv):
+        yield "step 1"
+
+    mgr.add_entry(None, None, flow)
+    mgr.start(_msg("/start"), mgr.entries()[0])
+
+    fake_now = [time.monotonic() + 99999]
+    monkeypatch.setattr(
+        "puragram.conversation.time.monotonic", lambda: fake_now[0]
+    )
+
+    assert mgr.has_active(_msg("x")) is True

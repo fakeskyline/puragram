@@ -3,6 +3,32 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.1] — 2026-09-27
+
+### Fixed
+
+- **Timeout notification** — when a conversation expires, the user now
+  receives `Dialog timed out. Send the command again to restart.`
+  instead of silence.
+- **`timeout=None`** now correctly disables the timeout. Previously it
+  fell back to the default 300 seconds, so long-running dialogs
+  (surveys, multi-hour forms) were cancelled unexpectedly.
+
+### Added
+
+- 7 more tests for `/cancel` and timeout edge cases:
+  - cancel outside an active conversation
+  - cancel with custom message
+  - cancel from any step
+  - cancel and restart the same user
+  - timeout sends notification
+  - timeout clears the slot
+  - `timeout=None` disables expiry
+
+### Notes
+
+- Total test count: 105.
+
 ## [1.2.0] — 2026-09-27
 
 ### Added
