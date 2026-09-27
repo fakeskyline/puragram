@@ -1,9 +1,11 @@
 # About puragram — Learn Python & Bots From Zero
 
 This document is a full beginner's guide. It teaches you Python, HTTP,
-and Telegram bots from scratch, and explains every design decision inside
-`puragram`. Read it end-to-end once — you will understand not just this
-library, but how any Telegram bot framework works under the hood.
+JSON, and Telegram bots from scratch, and explains every design decision
+inside `puragram`. Read it end-to-end once — you will understand not just
+this library, but how any Telegram bot framework works under the hood.
+
+Current version: **1.1.2**
 
 ---
 
@@ -23,7 +25,8 @@ library, but how any Telegram bot framework works under the hood.
 12. [Security — why it matters](#12-security--why-it-matters)
 13. [Testing your code](#13-testing-your-code)
 14. [Deploying a bot](#14-deploying-a-bot)
-15. [Further reading](#15-further-reading)
+15. [Inline mode and extra methods](#15-inline-mode-and-extra-methods)
+16. [Further reading](#16-further-reading)
 
 ---
 
@@ -31,6 +34,7 @@ library, but how any Telegram bot framework works under the hood.
 
 A **Telegram bot** is an automated account. You talk to it like a person,
 but a computer answers. Bots can:
+
 - Send and edit messages
 - Show buttons and keyboards
 - Receive photos, files, locations
@@ -38,15 +42,14 @@ but a computer answers. Bots can:
 - Accept payments
 
 Every bot is controlled by a program running on a server (or on your
-phone, as you did with Termux). That program talks to **Telegram Bot API**
-— a set of HTTPS endpoints Telegram exposes at `https://api.telegram.org`.
+phone, as you can do with Termux). That program talks to **Telegram Bot
+API** — a set of HTTPS endpoints Telegram exposes at
+`https://api.telegram.org`.
 
 You get a **token** from @BotFather. It looks like:
 
 ```
-
 1234567890:AAHxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
 ```
 
 Anyone with this token can control the bot. **Never commit it to GitHub.**
@@ -67,15 +70,15 @@ is_active = True     # bool
 nothing = None       # NoneType
 ```
 
-2.2 Lists, dicts, tuples
+### 2.2 Lists, dicts, tuples
 
 ```python
 fruits = ["apple", "banana", "cherry"]     # list — ordered, mutable
-person = {"name": "Bob", "age": 30}        # dict — key → value
+person = {"name": "Bob", "age": 30}        # dict — key to value
 point = (10, 20)                           # tuple — ordered, immutable
 ```
 
-2.3 Conditions
+### 2.3 Conditions
 
 ```python
 if age >= 18:
@@ -86,7 +89,7 @@ else:
     print("child")
 ```
 
-2.4 Loops
+### 2.4 Loops
 
 ```python
 for fruit in fruits:
@@ -101,7 +104,7 @@ while True:
         break
 ```
 
-2.5 Functions
+### 2.5 Functions
 
 ```python
 def greet(name, punctuation="!"):
@@ -111,7 +114,7 @@ greet("Alice")            # "Hello, Alice!"
 greet("Bob", "?")         # "Hello, Bob?"
 ```
 
-2.6 Classes
+### 2.6 Classes
 
 ```python
 class Dog:
@@ -125,11 +128,11 @@ rex = Dog("Rex")
 print(rex.bark())
 ```
 
-self is the instance. __init__ is the constructor.
+`self` is the instance. `__init__` is the constructor.
 
-2.7 Modules and imports
+### 2.7 Modules and imports
 
-A module is a .py file. A package is a folder with __init__.py.
+A **module** is a `.py` file. A **package** is a folder with `__init__.py`.
 
 ```python
 # inside myfile.py
@@ -138,7 +141,7 @@ from math import sqrt
 from .sibling import helper    # relative import
 ```
 
-2.8 Exceptions
+### 2.8 Exceptions
 
 ```python
 try:
@@ -149,7 +152,7 @@ finally:
     print("always runs")
 ```
 
-2.9 Decorators
+### 2.9 Decorators
 
 A decorator wraps a function. It is just a function that takes a function.
 
@@ -167,10 +170,10 @@ def hello():
 hello()   # prints "calling hello", then "hi"
 ```
 
-@bot.message_handler(...) in puragram is a decorator. It registers your
-function so the bot calls it when a matching message arrives.
+`@bot.message_handler(...)` in `puragram` is a decorator. It registers
+your function so the bot calls it when a matching message arrives.
 
-2.10 Type hints
+### 2.10 Type hints
 
 ```python
 def add(a: int, b: int) -> int:
@@ -182,11 +185,11 @@ use them to catch bugs before you run code. Use them everywhere.
 
 ---
 
-3. HTTP in 10 minutes
+## 3. HTTP in 10 minutes
 
-Your bot talks to Telegram over HTTPS.
+Your bot talks to Telegram over **HTTPS**.
 
-3.1 Request
+### 3.1 Request
 
 ```
 POST /bot123456:ABC/getUpdates HTTP/1.1
@@ -198,12 +201,12 @@ Content-Type: application/json
 
 Parts:
 
-· Method — GET, POST, PUT, DELETE
-· Path — /bot<token>/<methodName>
-· Headers — metadata (Content-Type, Authorization, etc.)
-· Body — data (JSON, form, or binary)
+- **Method** — `GET`, `POST`, `PUT`, `DELETE`
+- **Path** — `/bot<token>/<methodName>`
+- **Headers** — metadata (`Content-Type`, `Authorization`, etc.)
+- **Body** — data (JSON, form, or binary)
 
-3.2 Response
+### 3.2 Response
 
 ```
 HTTP/1.1 200 OK
@@ -212,25 +215,30 @@ Content-Type: application/json
 {"ok": true, "result": [...]}
 ```
 
-· Status code — 200 OK, 400 Bad Request, 404 Not Found, 500 Server Error
-· Body — usually JSON
+- **Status code** — 200 OK, 400 Bad Request, 404 Not Found, 500 Server Error
+- **Body** — usually JSON
 
-3.3 Why HTTPS matters
+### 3.3 Why HTTPS matters
 
 Plain HTTP is readable by anyone on the network. HTTPS encrypts traffic
-using TLS. Telegram only accepts HTTPS. Never send a bot token over
+using TLS. Telegram **only** accepts HTTPS. Never send a bot token over
 HTTP.
 
-3.4 Keep-alive
+### 3.4 Keep-alive
 
 Opening a new TCP + TLS connection per request is slow (~100 ms).
-urllib3 keeps connections alive in a pool. puragram uses
-PoolManager with pool_size connections. This is why it's faster than
-naive requests code.
+`urllib3` keeps connections alive in a **pool**. `puragram` uses
+`PoolManager` with `pool_size` connections. This is why it can be
+faster than naive code that opens a new connection every time.
+
+Starting from `puragram 1.1.1`, `PoolManager` is configured with
+`block=True` (wait for a free connection), `TCP_NODELAY` (disable
+Nagle's algorithm for small JSON payloads), and `SO_KEEPALIVE`
+(keep connections open). Together these reduce latency and jitter.
 
 ---
 
-4. JSON and data
+## 4. JSON and data
 
 JSON is the universal data format.
 
@@ -252,34 +260,34 @@ In Python:
 ```python
 import json
 
-data = json.loads('{"a": 1}')    # str -> dict
-text = json.dumps({"a": 1})      # dict -> str
+data = json.loads('{"a": 1}')    # str to dict
+text = json.dumps({"a": 1})      # dict to str
 ```
 
-puragram parses every Telegram response into Python dataclasses
-(Message, Chat, User, CallbackQuery) so you can write
-msg.text instead of msg["text"].
+`puragram` parses every Telegram response into Python **dataclasses**
+(`Message`, `Chat`, `User`, `CallbackQuery`) so you can write
+`msg.text` instead of `msg["text"]`.
 
 ---
 
-5. How Telegram Bot API works
+## 5. How Telegram Bot API works
 
-5.1 Getting updates — two modes
+### 5.1 Getting updates — two modes
 
-Long-polling: your program repeatedly asks Telegram "any new updates?".
-The connection stays open until either an update arrives or timeout
+**Long-polling**: your program repeatedly asks Telegram "any new updates?".
+The connection stays open until either an update arrives or `timeout`
 seconds pass.
 
 ```python
 updates = api.call("getUpdates", offset=next_offset, timeout=30)
 ```
 
-Webhook: you give Telegram a URL. It POSTs updates to you as they
+**Webhook**: you give Telegram a URL. It POSTs updates to you as they
 arrive.
 
 Long-polling is easier. Webhooks scale better.
 
-5.2 Sending messages
+### 5.2 Sending messages
 
 ```
 POST https://api.telegram.org/bot<TOKEN>/sendMessage
@@ -300,45 +308,58 @@ Response:
 }
 ```
 
-5.3 Offset
+### 5.3 Offset
 
-Every update has update_id. When you call getUpdates, you pass
-offset = last_update_id + 1. Telegram then "acknowledges" everything
+Every update has `update_id`. When you call `getUpdates`, you pass
+`offset = last_update_id + 1`. Telegram then acknowledges everything
 before that offset and never returns it again.
 
-5.4 Method names are camelCase
+### 5.4 Method names are camelCase
 
-Telegram API uses getMe, sendMessage, getUpdates. Python convention
-is get_me, send_message. puragram exposes the Python name and
-converts automatically via _camel() in api.py. This is why our first
-version returned 404 Not Found — we sent get_me literally.
+Telegram API uses `getMe`, `sendMessage`, `getUpdates`. Python convention
+is `get_me`, `send_message`. `puragram` exposes the Python name and
+converts automatically via `_camel()` in `api.py`. This is a common
+source of confusion — if you get `404 Not Found`, check that the method
+name is being converted correctly.
+
+### 5.5 Rate limits
+
+Telegram limits:
+
+- ~30 messages per second per chat
+- ~20 messages per minute to a group
+- 429 Too Many Requests comes with `retry_after` seconds
+
+`puragram` does **not** retry on 429 by default. You should catch the
+error and sleep before retrying. An unbounded retry loop would make
+things worse, not better.
 
 ---
 
-6. Reading the puragram source
+## 6. Reading the puragram source
 
-Open puragram/ and read files in this order:
+Open the `puragram/` folder and read files in this order:
 
-1. exceptions.py — what can go wrong
-2. security.py — all safety helpers
-3. logger.py — logging setup
-4. utils.py — small string helpers
-5. types.py — dataclasses for Telegram objects
-6. keyboards.py — inline and reply keyboards
-7. filters.py — decorator predicates
-8. api.py — HTTP layer
-9. middleware.py — request interceptors
-10. fsm/ — finite state machine
-11. webhook.py — HTTP server
-12. bot.py — the main class
-13. __init__.py — public exports
+1. **`exceptions.py`** — what can go wrong
+2. **`security.py`** — all safety helpers
+3. **`logger.py`** — logging setup with token redaction
+4. **`utils.py`** — small string helpers
+5. **`types.py`** — dataclasses for Telegram objects
+6. **`keyboards.py`** — inline and reply keyboards
+7. **`filters.py`** — decorator predicates
+8. **`api.py`** — HTTP layer over urllib3
+9. **`middleware.py`** — request interceptors
+10. **`fsm/`** — finite state machine
+11. **`webhook.py`** — HTTP server on stdlib
+12. **`bot.py`** — the main `Bot` class
+13. **`__init__.py`** — public exports
 
 Each file is under 300 lines. If you understand them all, you can write
 your own framework.
 
 ---
 
-7. Writing your first bot
+## 7. Writing your first bot
 
 ```python
 from puragram import Bot
@@ -352,32 +373,32 @@ def cmd_start(msg):
 
 @bot.message_handler(content_types=["text"])
 def echo(msg):
-    bot.send_message(msg.chat.id, f"You said: {msg.text}")
+    bot.send_message(msg.chat.id, f"You said: <b>{msg.text}</b>")
 
 if __name__ == "__main__":
     bot.run_polling()
 ```
 
-Save as mybot.py. Run python mybot.py. Message your bot on Telegram.
+Save as `mybot.py`. Run `python mybot.py`. Message your bot on Telegram.
 
-What happens step by step
+### What happens step by step
 
-1. Bot(TOKEN) creates a TelegramAPI instance with a connection pool.
-2. @bot.message_handler(...) registers your function in bot._handlers.
-3. bot.run_polling() calls getUpdates in a loop, parses each update
-   into an Update object, and dispatches it to matching handlers.
+1. `Bot(TOKEN)` creates a `TelegramAPI` instance with a connection pool.
+2. `@bot.message_handler(...)` registers your function in `bot._handlers`.
+3. `bot.run_polling()` calls `getUpdates` in a loop, parses each update
+   into an `Update` object, and dispatches it to matching handlers.
 
 ---
 
-8. Handlers, filters, and dispatch
+## 8. Handlers, filters, and dispatch
 
-A handler is (kind, function, filter, state).
+A **handler** is `(kind, function, filter, state)`.
 
-kind is one of: message, edited_message, channel_post,
-edited_channel_post, callback_query.
+`kind` is one of: `message`, `edited_message`, `channel_post`,
+`edited_channel_post`, `callback_query`, `inline_query`.
 
-A filter decides whether a handler should run for a given update.
-puragram supports both keyword filters:
+A **filter** decides whether a handler should run for a given update.
+`puragram` supports both keyword filters:
 
 ```python
 @bot.message_handler(commands=["start"], chat_types=["private"])
@@ -391,25 +412,28 @@ from puragram import Command, ChatType
 @bot.message_handler(Command("start") & ChatType("private"))
 ```
 
-Operators: & = AND, | = OR, ~ = NOT.
+Operators: `&` = AND, `|` = OR, `~` = NOT.
 
-Filter classes
+### Filter classes
 
-Class Matches
-Command("start", "help") /start or /help
-Text("yes", "no") exact text (case-insensitive)
-Regexp(r"^\d+$") regex against text
-ContentTypes("photo", "video") message content type
-ChatType("private", "group") chat type
-ChatId(12345) specific chat
-UserId(12345) specific user
-CallbackData("yes", "no") button press data
-Func(lambda m: m.text == "hi") any Python predicate
+| Class | Matches |
+|---|---|
+| `Command("start", "help")` | `/start` or `/help` |
+| `Text("yes", "no")` | exact text (case-insensitive) |
+| `Regexp(r"^\d+$")` | regex against text |
+| `ContentTypes("photo", "video")` | message content type |
+| `ChatType("private", "group")` | chat type |
+| `ChatId(12345)` | specific chat |
+| `UserId(12345)` | specific user |
+| `CallbackData("yes", "no")` | exact button press data |
+| `CallbackDataPrefix("menu:")` | button data with prefix |
+| `InlineQueryText("hello")` | inline query text |
+| `Func(lambda m: m.text == "hi")` | any Python predicate |
 
-Dispatch loop
+### Dispatch loop
 
-Inside Bot._dispatch, we iterate over (kind, obj) pairs. For each
-update field that is set (e.g. update.message), we loop through all
+Inside `Bot._dispatch`, we iterate over `(kind, obj)` pairs. For each
+update field that is set (e.g. `update.message`), we loop through all
 handlers of that kind. If the handler has a filter, we call it. If the
 handler has a state, we check the FSM. If both pass, we call the function.
 
@@ -429,33 +453,38 @@ for kind, obj in pairs:
 
 This is the heart of every bot framework.
 
+
 ---
 
-9. Finite State Machines (FSM)
+## 9. Finite State Machines (FSM)
 
-A state machine is a model with discrete states and transitions. Real
+A **state machine** is a model with discrete states and transitions. Real
 example — user registration:
 
 ```
         /start
-          ↓
+          |
+          v
        [ask name]
-          ↓ user replies with name
+          | user replies with name
+          v
        [ask age]
-          ↓ user replies with number
+          | user replies with number
+          v
        [ask city]
-          ↓ user replies with city
+          | user replies with city
+          v
         [done]
 ```
 
-Without FSM you'd store flags manually:
+Without FSM you would store flags manually:
 
 ```python
 user_data = {}
 user_data[user_id] = {"step": "ask_name"}
 ```
 
-puragram FSM does this properly:
+`puragram` FSM does this properly:
 
 ```python
 from puragram import State, StatesGroup, MemoryStorage
@@ -479,43 +508,49 @@ def on_name(msg, data):
     bot.send_message(msg.chat.id, "Your age?")
 ```
 
-Note the second parameter data. puragram inspects your function
-signature — if it has 2+ parameters, the second is a context dict with
-bot, state, and update.
+Note the second parameter `data`. `puragram` inspects your function
+signature — if it has 2 or more parameters, the second one is a context
+dict with `bot`, `state`, and `update`.
 
-Storage backends
+### Storage backends
 
-· MemoryStorage — dict in RAM. Fast. Lost on restart.
-· FileStorage("fsm.json") — JSON file. Survives restart.
-· SQLiteStorage("fsm.db") — database. Survives restart, handles
+- `MemoryStorage` — dict in RAM. Fast. Lost on restart.
+- `FileStorage("fsm.json")` — JSON file. Survives restart.
+- `SQLiteStorage("fsm.db")` — database. Survives restart, handles
   concurrency.
 
 All three implement the same interface, so you can swap them freely.
 
+### State keys
+
+The FSM key is derived from `(chat_id, user_id)`. So if 5 users talk to
+your bot at once, each has its own state. Two users in the same group
+chat also have separate states.
+
 ---
 
-10. Middleware
+## 10. Middleware
 
-A middleware sits between dispatch and your handler:
+A **middleware** sits between dispatch and your handler:
 
 ```
-update → middleware1 → middleware2 → handler
+update -> middleware1 -> middleware2 -> handler
 ```
 
 Use cases:
 
-· Log every call
-· Limit rate per user
-· Measure timing
-· Inject shared data
-· Catch exceptions
+- Log every call
+- Limit rate per user
+- Measure timing
+- Inject shared data
+- Catch exceptions
 
 Example:
 
 ```python
 from puragram import ThrottlingMiddleware
 
-bot.middleware(ThrottlingMiddleware(rate=1.0))   # max 1 message/sec/user
+bot.middleware(ThrottlingMiddleware(rate=1.0))   # max 1 msg/sec/user
 ```
 
 Custom middleware:
@@ -536,14 +571,19 @@ class BanCheck(BaseMiddleware):
 bot.middleware(BanCheck({111, 222}))
 ```
 
-Middleware order is outermost first. bot.middleware(A); bot.middleware(B)
-runs A then B then your handler.
+Middleware order is **outermost first**:
+
+```python
+bot.middleware(A)
+bot.middleware(B)
+# runs: A -> B -> your handler
+```
 
 ---
 
-11. Webhooks vs long-polling
+## 11. Webhooks vs long-polling
 
-Long-polling
+### Long-polling
 
 ```
 loop:
@@ -551,47 +591,60 @@ loop:
     process(updates)
 ```
 
-Pros: no public IP needed, no TLS certificate, easy to run behind NAT.
-Cons: one HTTP request per bot per 30 s on idle, slightly higher latency.
+**Pros**: no public IP needed, no TLS certificate, easy to run behind NAT.
 
-Webhooks
+**Cons**: one HTTP request per bot per 30 s on idle, slightly higher latency.
+
+### Webhooks
 
 ```
-POST https://yourdomain.com/webhook  ← Telegram pushes updates here
+POST https://yourdomain.com/webhook   <- Telegram pushes updates here
 ```
 
-Pros: lower latency, more efficient at scale.
-Cons: needs public HTTPS URL, certificate, server infrastructure.
+**Pros**: lower latency, more efficient at scale.
 
-puragram provides WebhookServer on top of http.server:
+**Cons**: needs public HTTPS URL, certificate, server infrastructure.
+
+`puragram` provides `WebhookServer` on top of `http.server`:
 
 ```python
 from puragram import WebhookServer
 
 bot = Bot(TOKEN)
-server = WebhookServer(bot, host="0.0.0.0", port=8080,
-                       path="/webhook", secret_token="random-32-chars")
+server = WebhookServer(
+    bot,
+    host="0.0.0.0",
+    port=8080,
+    path="/webhook",
+    secret_token="random-32-chars-please",
+)
 server.install("https://yourdomain.com/webhook")
 server.start(blocking=True)
 ```
 
-Always set secret_token. Telegram sends it in a header. If the
-header is missing or wrong, puragram returns 403 Forbidden before
+**Always set `secret_token`.** Telegram sends it in a header. If the
+header is missing or wrong, `puragram` returns `403 Forbidden` before
 touching your handlers. This blocks fake webhook POSTs from attackers.
+
+For local testing, use `cloudflared` or `ngrok` to expose your laptop:
+
+```bash
+cloudflared tunnel --url http://localhost:8080
+```
 
 ---
 
-12. Security — why it matters
+## 12. Security — why it matters
 
-A Telegram bot is a public endpoint. Anyone can:
+A Telegram bot is a **public endpoint**. Anyone can:
 
-· Send it messages
-· Press its buttons
-· Post to its webhook URL
+- Send it messages
+- Press its buttons
+- Post to its webhook URL
 
-puragram ships with defenses for common attacks.
+`puragram` ships with defenses for common attacks.
 
-12.1 Path traversal
+### 12.1 Path traversal
 
 If you accept a filename from a user and open it:
 
@@ -599,8 +652,8 @@ If you accept a filename from a user and open it:
 open(msg.text)          # DANGEROUS — user sends "../../etc/passwd"
 ```
 
-safe_path() resolves the real path and rejects anything inside
-/etc, /proc, /sys, /root, /dev, or outside base_dir.
+`safe_path()` resolves the real path and rejects anything inside
+`/etc`, `/proc`, `/sys`, `/root`, `/dev`, or outside `base_dir`:
 
 ```python
 from puragram import safe_path
@@ -610,43 +663,43 @@ with open(path, "rb") as f:
     ...
 ```
 
-12.2 Upload size limit
+### 12.2 Upload size limit
 
-Telegram caps at 50 MB. check_size(path) raises before you waste
+Telegram caps at 50 MB. `check_size(path)` raises before you waste
 bandwidth.
 
-12.3 Callback data length
+### 12.3 Callback data length
 
-Telegram limit: 64 bytes UTF-8. validate_callback_data raises early
-on \x00 bytes or oversized payloads.
+Telegram limit: 64 bytes UTF-8. `validate_callback_data` raises early
+on `\x00` bytes or oversized payloads.
 
-12.4 ReDoS
+### 12.4 ReDoS
 
-Regular expressions can run forever. (a+)+$ against aaaa...ab is
-exponential. compile_safe_regex rejects patterns containing
+Regular expressions can run forever. `(a+)+$` against `aaaa...ab` is
+**exponential**. `compile_safe_regex` rejects patterns containing
 nested quantifiers or quantified alternations.
 
-12.5 Webhook forgery
+### 12.5 Webhook forgery
 
-Anyone who knows your URL can POST fake updates. constant_time_eq
-compares the X-Telegram-Bot-Api-Secret-Token header using
-hmac.compare_digest, which prevents timing attacks.
+Anyone who knows your URL can POST fake updates. `constant_time_eq`
+compares the `X-Telegram-Bot-Api-Secret-Token` header using
+`hmac.compare_digest`, which prevents timing attacks.
 
-12.6 Token leakage
+### 12.6 Token leakage
 
-log.exception() on an error can print the URL, which contains the token.
-logger.py replaces any \d+:[A-Za-z0-9_-]+ with ***REDACTED***
+`log.exception()` on an error can print the URL, which contains the token.
+`logger.py` replaces any `\d+:[A-Za-z0-9_-]+` with `***REDACTED***`
 before writing.
 
-12.7 Idempotency
+### 12.7 Idempotency
 
 Telegram sometimes delivers the same update twice (rare, but happens on
-network retries). _DedupCache keeps the last 1024 update_id values
+network retries). `_DedupCache` keeps the last 1024 `update_id` values
 in an LRU. Duplicates are skipped.
 
-12.8 SQL injection
+### 12.8 SQL injection
 
-SQLiteStorage uses only parameterized queries:
+`SQLiteStorage` uses only parameterized queries:
 
 ```python
 conn.execute("... WHERE key = ?", (key,))
@@ -656,7 +709,7 @@ Never build SQL with f-strings.
 
 ---
 
-13. Testing your code
+## 13. Testing your code
 
 Install pytest:
 
@@ -688,23 +741,25 @@ python -m pytest -v
 
 Rules of thumb:
 
-· Test one thing per function
-· Name tests test_<what>_<condition>
-· Use pytest.raises(ValueError) for expected failures
-· Use tmp_path fixture for file tests
-· Aim for 80%+ coverage of critical code
+- Test one thing per function
+- Name tests `test_<what>_<condition>`
+- Use `pytest.raises(ValueError)` for expected failures
+- Use `tmp_path` fixture for file tests
+- Aim for 80%+ coverage of critical code
+
+`puragram` itself has 84 tests covering filters, FSM, security, and
+utilities.
 
 ---
 
-14. Deploying a bot
+## 14. Deploying a bot
 
 Running on your phone is fine for learning. For a real bot:
 
-Option A — VPS (5 USD/month)
+### Option A — VPS (5 USD/month)
 
-· Rent a VPS (Hetzner, DigitalOcean, Scaleway, Ukrainian providers)
-· Install Python, clone your repo
-· Run as a systemd service:
+Rent a VPS (Hetzner, DigitalOcean, Scaleway, Ukrainian providers).
+Install Python, clone your repo, run as a systemd service:
 
 ```ini
 [Unit]
@@ -725,7 +780,7 @@ sudo systemctl enable mybot
 sudo systemctl start mybot
 ```
 
-Option B — Docker
+### Option B — Docker
 
 ```dockerfile
 FROM python:3.12-slim
@@ -740,80 +795,146 @@ docker build -t mybot .
 docker run -d --restart=always mybot
 ```
 
-Option C — Free tiers
+### Option C — Free tiers
 
-· Railway, Render, Fly.io — free for small bots
-· GitHub Actions (only for scheduled tasks, not 24/7 polling)
+Railway, Render, Fly.io — free for small bots.
 
-Always
+GitHub Actions — only for scheduled tasks, not 24/7 polling.
 
-· Store token in env var, never in code
-· Set up log rotation
-· Monitor with systemctl status, journalctl -u mybot -f
+### Always
 
----
-
-15. Further reading
-
-Python
-
-· Official tutorial: https://docs.python.org/3/tutorial/
-· PEP 8 (style guide): https://peps.python.org/pep-0008/
-· Real Python: https://realpython.com/
-
-Telegram
-
-· Bot API reference: https://core.telegram.org/bots/api
-· Bot features: https://core.telegram.org/bots/features
-· Payment: https://core.telegram.org/bots/payments
-
-HTTP and networking
-
-· MDN HTTP: https://developer.mozilla.org/en-US/docs/Web/HTTP
-· HTTP/2 explained: https://http2-explained.haxx.se/
-
-Async (when you're ready)
-
-· asyncio docs: https://docs.python.org/3/library/asyncio.html
-· aiohttp: https://docs.aiohttp.org/
-
-Design patterns
-
-· aiogram source: https://github.com/aiogram/aiogram
-· python-telegram-bot: https://github.com/python-telegram-bot/python-telegram-bot
-· Flask, FastAPI — read how decorators and middleware work there
+- Store token in env var, never in code
+- Set up log rotation
+- Monitor with `systemctl status`, `journalctl -u mybot -f`
 
 ---
 
-Appendix A — Why puragram exists
+## 15. Inline mode and extra methods
 
-Most Telegram Python libraries use requests or aiohttp:
+Since version 1.1.0, `puragram` supports **inline mode** and additional
+Bot API methods.
 
-Library Stack Pros Cons
-pyTelegramBotAPI requests Simple, sync Slow per-request, high deps
-aiogram aiohttp Fast, async Steep curve, heavy
-python-telegram-bot httpx Feature-rich Large, complex
-puragram urllib3 Lean, direct, secure Young, fewer features
+### 15.1 Inline mode
 
-puragram uses urllib3.PoolManager directly — the same layer requests
-wraps. Skipping requests cuts dependencies and per-call overhead.
+An **inline query** happens when a user types `@yourbot query` in any
+chat. Your bot returns a list of results the user can send.
+
+```python
+from puragram import Bot, InlineQueryResultArticle
+
+bot = Bot("YOUR_TOKEN")
+
+@bot.inline_query_handler()
+def on_inline(q):
+    results = [
+        InlineQueryResultArticle(
+            id="hello",
+            title="Send hello",
+            description="A friendly greeting",
+            input_message_content={"message_text": "Hello!"},
+        ),
+    ]
+    bot.answer_inline_query(q.id, results, cache_time=5)
+
+bot.run_polling()
+```
+
+Enable inline mode via @BotFather: `/mybots` -> your bot ->
+Bot Settings -> Inline Mode -> Turn on.
+
+### 15.2 New Bot methods (1.1.0+)
+
+- `send_poll(chat_id, question, options)`
+- `send_location(chat_id, latitude, longitude)`
+- `send_contact(chat_id, phone_number, first_name)`
+- `send_dice(chat_id, emoji="🎲")`
+- `send_sticker(chat_id, sticker)`
+- `send_long_message(chat_id, text)` — splits long text automatically
+
+### 15.3 New filters (1.1.0+)
+
+- `CallbackDataPrefix("menu:", "nav:")` — match callback data by prefix
+- `InlineQueryText("hello")` — match inline query text
+
+### 15.4 Stability (1.1.1+)
+
+- `TCP_NODELAY` — lower latency for small payloads
+- `SO_KEEPALIVE` — connections stay open
+- `PoolManager(block=True)` — reliable connection reuse
+- `retries=0` by default — no hidden delays; opt-in with `Bot(..., retries=2)`
+- `connect_timeout` configurable separately from read timeout
+- `pool_size` default raised from 10 to 16
+
+### 15.5 Deprecation cleanups (1.1.2+)
+
+- `pyproject.toml` uses `license = "MIT"` (SPDX format)
+- `license-files = ["LICENSE"]`
+- Removed the deprecated license classifier
+
+---
+
+## 16. Further reading
+
+### Python
+
+- Official tutorial: https://docs.python.org/3/tutorial/
+- PEP 8 (style guide): https://peps.python.org/pep-0008/
+- Real Python: https://realpython.com/
+
+### Telegram
+
+- Bot API reference: https://core.telegram.org/bots/api
+- Bot features: https://core.telegram.org/bots/features
+- Payment: https://core.telegram.org/bots/payments
+
+### HTTP and networking
+
+- MDN HTTP: https://developer.mozilla.org/en-US/docs/Web/HTTP
+- HTTP/2 explained: https://http2-explained.haxx.se/
+
+### Async (when you are ready)
+
+- `asyncio` docs: https://docs.python.org/3/library/asyncio.html
+- `aiohttp`: https://docs.aiohttp.org/
+
+### Design patterns
+
+- `aiogram` source: https://github.com/aiogram/aiogram
+- `python-telegram-bot`: https://github.com/python-telegram-bot/python-telegram-bot
+- Flask, FastAPI — read how decorators and middleware work there
+
+---
+
+## Appendix A — Why puragram exists
+
+Most Telegram Python libraries use `requests` or `aiohttp`:
+
+| Library | Stack | Pros | Cons |
+|---|---|---|---|
+| `pyTelegramBotAPI` | `requests` | Simple, sync | Extra layers, larger deps |
+| `aiogram` | `aiohttp` | Fast, async | Steep curve, heavy |
+| `python-telegram-bot` | `httpx` | Feature-rich | Large, complex |
+| **`puragram`** | **`urllib3`** | **Lean, direct, secure** | **Young, fewer features** |
+
+`puragram` uses `urllib3.PoolManager` directly — the same layer `requests`
+wraps. Skipping `requests` cuts dependencies and per-call overhead.
 Sending JSON instead of form data is faster to serialize. Built-in
 security is a bonus nobody else ships.
 
-Appendix B — Glossary
+## Appendix B — Glossary
 
-· Update — a JSON event from Telegram
-· Handler — your function that handles an update
-· Filter — a predicate deciding if a handler runs
-· FSM — state machine for multi-step dialogs
-· Middleware — interceptor between dispatch and handler
-· Webhook — Telegram pushes updates to your URL
-· Long-polling — you pull updates from Telegram
-· Offset — id of the last processed update; Telegram skips earlier ones
-· Token — secret string authenticating your bot
-· Callback data — string attached to an inline button click (≤64 bytes)
+- **Update** — a JSON event from Telegram
+- **Handler** — your function that handles an update
+- **Filter** — a predicate deciding if a handler runs
+- **FSM** — state machine for multi-step dialogs
+- **Middleware** — interceptor between dispatch and handler
+- **Webhook** — Telegram pushes updates to your URL
+- **Long-polling** — you pull updates from Telegram
+- **Offset** — id of the last processed update
+- **Token** — secret string authenticating your bot
+- **Callback data** — string attached to an inline button click (max 64 bytes)
 
-Appendix C — Cheat sheet
+## Appendix C — Cheat sheet
 
 ```python
 from puragram import Bot, Command, State, StatesGroup
@@ -844,4 +965,4 @@ bot.run_polling(timeout=30, workers=2)
 
 ---
 
-End of ABOUT.md. Now go build something
+**End of ABOUT.md. Now go build something.**

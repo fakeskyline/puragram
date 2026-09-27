@@ -3,36 +3,19 @@
 **Fast, dependency-light Telegram Bot API framework built on urllib3.**
 No aiohttp. No requests. No httpx.
 
-[![PyPI version](https://img.shields.io/pypi/v/puragram.svg)](https://pypi.org/project/puragram/)
-[![Python versions](https://img.shields.io/pypi/pyversions/puragram.svg)](https://pypi.org/project/puragram/)
+[![PyPI](https://img.shields.io/pypi/v/puragram.svg)](https://pypi.org/project/puragram/)
+[![Python](https://img.shields.io/pypi/pyversions/puragram.svg)](https://pypi.org/project/puragram/)
 [![License](https://img.shields.io/pypi/l/puragram.svg)](https://github.com/fakeskyline/puragram/blob/main/LICENSE)
-[![Downloads](https://img.shields.io/pypi/dm/puragram.svg)](https://pypi.org/project/puragram/)
-
----
 
 ## Why puragram?
 
-Most Telegram Python libraries pull in `aiohttp` or `requests`. `puragram`
+Most Telegram Python libraries pull in `aiohttp` or `requests`. puragram
 talks directly to the Telegram Bot API through `urllib3` with a keep-alive
 connection pool. That means:
 
 - **Small** — no heavy dependencies, just `urllib3`
 - **Fast** — direct JSON requests, no middleware layers
 - **Sync** — simple, predictable, easy to debug
-
-## Features
-
-- Long-polling and webhook (pure stdlib `http.server`)
-- **Inline mode** — `@yourbot query` with results
-- Built-in FSM: `State`, `StatesGroup`, `MemoryStorage`, `FileStorage`, `SQLiteStorage`
-- Middleware: logging, throttling, timing
-- Filters: `Command`, `Text`, `Regexp`, `ContentTypes`, `ChatType`, `ChatId`, `UserId`, `CallbackData`, `CallbackDataPrefix`, `Func`
-- Filter operators: `&` (and), `|` (or), `~` (not)
-- File sending: photo, document, video, audio, voice, sticker
-- Extras: poll, location, contact, dice
-- Auto-split for long messages (`send_long_message`)
-- Security: path traversal guard, size limits, ReDoS protection, token redaction, dedup, safe SQLite
-- Zero dependencies except `urllib3`
 
 ## Install
 
@@ -101,7 +84,7 @@ def on_age(msg, data):
 bot.run_polling()
 ```
 
-## Inline mode example
+## Inline mode
 
 ```python
 from puragram import Bot, InlineQueryResultArticle
@@ -112,7 +95,7 @@ bot = Bot("YOUR_TOKEN")
 def on_inline(q):
     results = [
         InlineQueryResultArticle(
-            id="1",
+            id="hello",
             title="Send hello",
             input_message_content={"message_text": "Hello!"},
         ),
@@ -161,6 +144,31 @@ if __name__ == "__main__":
     server.start(blocking=True)
 ```
 
+## Features
+
+- Long-polling and webhook (pure stdlib `http.server`)
+- Inline mode: `@yourbot query` with results
+- FSM: `State`, `StatesGroup`, `MemoryStorage`, `FileStorage`, `SQLiteStorage`
+- Middleware: logging, throttling, timing
+- Filters: `Command`, `Text`, `Regexp`, `ContentTypes`, `ChatType`, `ChatId`, `UserId`, `CallbackData`, `CallbackDataPrefix`, `Func`
+- Filter operators: `&` (and), `|` (or), `~` (not)
+- File sending: photo, document, video, audio, voice, sticker
+- Extras: poll, location, contact, dice
+- Auto-split for long messages: `send_long_message`
+- Security: path traversal guard, size limits, ReDoS protection, token redaction, dedup, safe SQLite
+- Zero dependencies except `urllib3`
+
+## Performance
+
+Benchmarked on Termux (Android, same Wi-Fi, ~30 ms to Telegram, median of 3 trials):
+
+| Workload | puragram | pyTelegramBotAPI |
+|---|---|---|
+| 5 × sendMessage | 85 ms/msg | 89 ms/msg |
+| 3 × sendPhoto | 99 ms/msg | 116 ms/msg |
+
+Your results will vary with network latency.
+
 ## Security
 
 - **Path traversal** — `safe_path()` rejects `/etc`, `/proc`, `/sys`, `/root`, `/dev`
@@ -174,7 +182,9 @@ if __name__ == "__main__":
 
 ## Documentation
 
-See [ABOUT.md](https://github.com/fakeskyline/puragram/blob/main/ABOUT.md) for a full beginner's guide: Python essentials, HTTP, JSON, Telegram Bot API, FSM, middleware, webhooks, security, testing, and deployment.
+Full beginner's guide: [ABOUT.md](https://github.com/fakeskyline/puragram/blob/main/ABOUT.md).
+
+Changelog: [CHANGELOG.md](https://github.com/fakeskyline/puragram/blob/main/CHANGELOG.md).
 
 ## License
 

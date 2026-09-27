@@ -3,6 +3,22 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.2] — 2026-09-27
+
+### Changed
+
+- `pyproject.toml` now uses the SPDX license format:
+  `license = "MIT"` and `license-files = ["LICENSE"]`
+- Removed the deprecated `License :: OSI Approved :: MIT License` classifier
+- Documentation refresh: `README.md` and `ABOUT.md` updated to 1.1.2
+  with inline mode, new methods, performance benchmarks, and security notes
+
+### Notes
+
+- No code changes. Behavior is identical to 1.1.1.
+- This release only silences the setuptools deprecation warnings that
+  appeared during builds.
+
 ## [1.1.1] — 2026-09-27
 
 ### Changed
@@ -26,10 +42,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Inline mode: `@inline_query_handler()` and `bot.answer_inline_query()`
-- `InlineQueryResultArticle` and `InlineQueryResultPhoto` result types
+- `InlineQueryResultArticle`, `InlineQueryResultPhoto`, `InlineQueryResultGif`
 - New Bot methods: `send_poll`, `send_location`, `send_contact`, `send_dice`, `send_sticker`
 - `send_long_message` — auto-splits long messages using `split_message`
 - `CallbackDataPrefix` filter for prefix-matching callback data
+- `InlineQueryText` filter for inline query text
 
 ### Changed
 
