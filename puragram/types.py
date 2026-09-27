@@ -139,6 +139,37 @@ class CallbackQuery:
 
 
 @dataclass
+class InlineQuery:
+    id: str
+    from_user: Optional[User] = None
+    query: str = ""
+    offset: str = ""
+    chat_type: Optional[str] = None
+    location: Optional[dict] = None
+    raw: dict = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            id=d["id"],
+            from_user=User.from_dict(d["from"]) if "from" in d else None,
+            query=d.get("query", ""),
+            offset=d.get("offset", ""),
+            chat_type=d.get("chat_type"),
+            location=d.get("location"),
+            raw=d,
+        )
+
+    def __getattr__(self, item):
+        if item == "from_":
+            item = "from"
+        raw = self.__dict__.get("raw", {})
+        if item in raw:
+            return raw[item]
+        raise AttributeError(item)
+
+
+@dataclass
 class Update:
     update_id: int
     message: Optional[Message] = None
@@ -146,7 +177,7 @@ class Update:
     channel_post: Optional[Message] = None
     edited_channel_post: Optional[Message] = None
     callback_query: Optional[CallbackQuery] = None
-    inline_query: Optional[dict] = None
+    inline_query: Optional[InlineQuery] = None
     chosen_inline_result: Optional[dict] = None
     shipping_query: Optional[dict] = None
     pre_checkout_query: Optional[dict] = None
@@ -157,6 +188,7 @@ class Update:
     def from_dict(cls, d):
         def _msg(key):
             return Message.from_dict(d[key]) if key in d else None
+
         return cls(
             update_id=d["update_id"],
             message=_msg("message"),
@@ -165,13 +197,94 @@ class Update:
             edited_channel_post=_msg("edited_channel_post"),
             callback_query=(CallbackQuery.from_dict(d["callback_query"])
                             if "callback_query" in d else None),
-            inline_query=d.get("inline_query"),
+            inline_query=(InlineQuery.from_dict(d["inline_query"])
+                          if "inline_query" in d else None),
             chosen_inline_result=d.get("chosen_inline_result"),
             shipping_query=d.get("shipping_query"),
             pre_checkout_query=d.get("pre_checkout_query"),
             poll=d.get("poll"),
             raw=d,
         )
+
+
+# ─── Inline query result types ───
+
+@dataclass
+class InlineQueryResultArticle:
+    id: str
+    title: str
+    input_message_content: dict
+    description: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    reply_markup: Optional[dict] = None
+
+    def to_dict(self):
+        d = {
+            "type": "article",
+            "id": self.id,
+            "title": self.title,
+            "input_message_content": self.input_message_content,
+        }
+        if self.description is not None:
+            d["description"] = self.description
+        if self.thumbnail_url is not None:
+            d["thumbnail_url"] = self.thumbnail_url
+        if self.reply_markup is not None:
+            d["reply_markup"] = self.reply_markup
+        return d
+
+
+@dataclass
+class InlineQueryResultPhoto:
+    id: str
+    photo_url: str
+    thumbnail_url: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    caption: Optional[str] = None
+    parse_mode: Optional[str] = None
+    reply_markup: Optional[dict] = None
+
+    def to_dict(self):
+        d = {
+            "type": "photo",
+            "id": self.id,
+            "photo_url": self.photo_url,
+            "thumbnail_url": self.thumbnail_url,
+        }
+        if self.title is not None:
+            d["title"] = self.title
+        if self.description is not None:
+            d["description"] = self.description
+        if self.caption is not None:
+            d["caption"] = self.caption
+        if self.parse_mode is not None:
+            d["parse_mode"] = self.parse_mode
+        if self.reply_markup is not None:
+            d["reply_markup"] = self.reply_markup
+        return d
+
+
+@dataclass
+class InlineQueryResultGif:
+    id: str
+    gif_url: str
+    thumbnail_url: str
+    title: Optional[str] = None
+    caption: Optional[str] = None
+
+    def to_dict(self):
+        d = {
+            "type": "gif",
+            "id": self.id,
+            "gif_url": self.gif_url,
+            "thumbnail_url": self.thumbnail_url,
+        }
+        if self.title is not None:
+            d["title"] = self.title
+        if self.caption is not None:
+            d["caption"] = self.caption
+        return d
 
 
 from .keyboards import (  # noqa: E402, F401

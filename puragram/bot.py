@@ -13,6 +13,7 @@ from .fsm import FSMContext, MemoryStorage
 from .logger import get_logger
 from .security import safe_path, check_size, validate_text
 from .types import Message, Update, User
+from .utils import split_message
 
 log = get_logger("puragram")
 
@@ -95,6 +96,8 @@ class Bot:
         self._dedup = _DedupCache()
         self._allowed_updates_override = allowed_updates
 
+    # ─────────── Реєстрація хендлерів ───────────
+
     def _register(self, kind, custom_filters, state, named):
         f = build_named(**named)
         for cf in custom_filters:
@@ -121,9 +124,14 @@ class Bot:
     def callback_query_handler(self, *filters, state=None, **named):
         return self._register("callback_query", filters, state, named)
 
+    def inline_query_handler(self, *filters, state=None, **named):
+        return self._register("inline_query", filters, state, named)
+
     def middleware(self, mw):
         self._middlewares.append(mw)
         return mw
+
+    # ─────────── API методи ───────────
 
     def _defaults(self, kwargs):
         if self.parse_mode and "parse_mode" not in kwargs:
@@ -143,6 +151,15 @@ class Bot:
                 {"chat_id": chat_id, "text": text, **kwargs}
             )
         ))
+
+    def send_long_message(self, chat_id, text, **kwargs):
+        """Splits long text into chunks and sends each. Returns list of Message."""
+        validate_text(text)
+        chunks = split_message(text)
+        results = []
+        for chunk in chunks:
+            results.append(self.send_message(chat_id, chunk, **kwargs))
+        return results
 
     def edit_message_text(self, text, chat_id=None, message_id=None,
                           inline_message_id=None, **kwargs):
@@ -194,6 +211,30 @@ class Bot:
             params["cache_time"] = int(cache_time)
         return self.api.call("answer_callback_query", **params)
 
+    def answer_inline_query(self, inline_query_id, results,
+                            cache_time=300, is_personal=False,
+                            next_offset=None, button=None):
+        """Answers an inline query with results.
+
+        `results` is a list of objects with to_dict() (e.g. InlineQueryResultArticle)
+        or plain dicts.
+        """
+        serialized = [
+            r.to_dict() if hasattr(r, "to_dict") else r for r in results
+        ]
+        params = {
+            "inline_query_id": inline_query_id,
+            "results": serialized,
+            "cache_time": int(cache_time),
+            "is_personal": bool(is_personal),
+        }
+        if next_offset is not None:
+            params["next_offset"] = next_offset
+        if button is not None:
+            params["button"] = (button.to_dict()
+                                if hasattr(button, "to_dict") else button)
+        return self.api.call("answer_inline_query", **params)
+
     def get_me(self):
         if self._me is None:
             self._me = User.from_dict(self.api.call("get_me"))
@@ -216,6 +257,8 @@ class Bot:
 
     def call(self, method, **params):
         return self.api.call(method, **params)
+
+    # ─────────── Файли ───────────
 
     def _send_file(self, method, chat_id, field_name, source,
                    caption=None, **kwargs):
@@ -254,6 +297,67 @@ class Bot:
     def send_voice(self, chat_id, voice, caption=None, **kwargs):
         return self._send_file("send_voice", chat_id, "voice", voice,
                                caption=caption, **kwargs)
+
+    def send_sticker(self, chat_id, sticker, **kwargs):
+        return self._send_file("send_sticker", chat_id, "sticker", sticker,
+                               **kwargs)
+
+    # ─────────── Нові методи ───────────
+
+    def send_poll(self, chat_id, question, options, is_anonymous=True,
+                  type="regular", allows_multiple_answers=False,
+                  correct_option_id=None, explanation=None, **kwargs):
+        params = self._defaults({
+            "chat_id": chat_id,
+            "question": str(question)[:300],
+            "options": [{"text": str(o)[:100]} for o in options],
+            "is_anonymous": bool(is_anonymous),
+            "type": type,
+            "allows_multiple_answers": bool(allows_multiple_answers),
+            **kwargs,
+        })
+        if correct_option_id is not None:
+            params["correct_option_id"] = int(correct_option_id)
+        if explanation is not None:
+            params["explanation"] = str(explanation)[:200]
+        return Message.from_dict(self.api.call("send_poll", **params))
+
+    def send_location(self, chat_id, latitude, longitude,
+                      horizontal_accuracy=None, live_period=None,
+                      **kwargs):
+        params = self._defaults({
+            "chat_id": chat_id,
+            "latitude": float(latitude),
+            "longitude": float(longitude),
+            **kwargs,
+        })
+        if horizontal_accuracy is not None:
+            params["horizontal_accuracy"] = float(horizontal_accuracy)
+        if live_period is not None:
+            params["live_period"] = int(live_period)
+        return Message.from_dict(self.api.call("send_location", **params))
+
+    def send_contact(self, chat_id, phone_number, first_name,
+                     last_name=None, vcard=None, **kwargs):
+        params = self._defaults({
+            "chat_id": chat_id,
+            "phone_number": phone_number,
+            "first_name": first_name,
+            **kwargs,
+        })
+        if last_name is not None:
+            params["last_name"] = last_name
+        if vcard is not None:
+            params["vcard"] = vcard
+        return Message.from_dict(self.api.call("send_contact", **params))
+
+    def send_dice(self, chat_id, emoji=None, **kwargs):
+        params = self._defaults({"chat_id": chat_id, **kwargs})
+        if emoji is not None:
+            params["emoji"] = emoji
+        return Message.from_dict(self.api.call("send_dice", **params))
+
+    # ─────────── Polling ───────────
 
     def polling(self, timeout=30, non_stop=True, interval=0.0,
                 allowed_updates=None, drop_pending_updates=False,
@@ -343,6 +447,8 @@ class Bot:
         kinds = {h.kind for h in self._handlers}
         return list(kinds) if kinds else None
 
+    # ─────────── Диспетчер ───────────
+
     def _dispatch(self, update):
         pairs = (
             ("message", update.message),
@@ -350,6 +456,7 @@ class Bot:
             ("channel_post", update.channel_post),
             ("edited_channel_post", update.edited_channel_post),
             ("callback_query", update.callback_query),
+            ("inline_query", update.inline_query),
         )
         for kind, obj in pairs:
             if obj is None:

@@ -141,6 +141,32 @@ class CallbackData(BaseFilter):
         return getattr(obj, "data", None) in self.variants
 
 
+class CallbackDataPrefix(BaseFilter):
+    def __init__(self, *prefixes):
+        if not prefixes:
+            raise ValueError("At least one prefix required")
+        self.prefixes = tuple(prefixes)
+
+    def __call__(self, obj):
+        data = getattr(obj, "data", None)
+        if data is None:
+            return False
+        return data.startswith(self.prefixes)
+
+
+class InlineQueryText(BaseFilter):
+    def __init__(self, *variants, ignore_case=True):
+        self.ignore_case = ignore_case
+        if ignore_case:
+            self.variants = {str(v).lower() for v in variants}
+        else:
+            self.variants = set(variants)
+
+    def __call__(self, q):
+        text = getattr(q, "query", None) or ""
+        return (text.lower() if self.ignore_case else text) in self.variants
+
+
 def build_named(**named):
     parts = []
     if "commands" in named:
@@ -161,6 +187,16 @@ def build_named(**named):
     if "callback_data" in named:
         v = named.pop("callback_data")
         parts.append(CallbackData(*(v if isinstance(v, (list, tuple, set)) else [v])))
+    if "callback_data_prefix" in named:
+        v = named.pop("callback_data_prefix")
+        parts.append(CallbackDataPrefix(
+            *(v if isinstance(v, (list, tuple, set)) else [v])
+        ))
+    if "inline_query_text" in named:
+        v = named.pop("inline_query_text")
+        parts.append(InlineQueryText(
+            *(v if isinstance(v, (list, tuple, set)) else [v])
+        ))
     if "regexp" in named:
         parts.append(Regexp(named.pop("regexp")))
     if "func" in named:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "puragram"
-version = "1.0.0"
+version = "1.1.0"
 description = "Fast, dependency-light Telegram Bot API framework built on urllib3"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -12,7 +12,7 @@ authors = [
     { name = "Maxim Zhovner", email = "zovnercukmaksim197@gmail.com" }
 ]
 license = { text = "MIT" }
-keywords = ["telegram", "bot", "api", "urllib3", "framework"]
+keywords = ["telegram", "bot", "api", "urllib3", "framework", "async-free"]
 dependencies = ["urllib3>=2.0"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -27,6 +27,12 @@ classifiers = [
     "Topic :: Communications :: Chat",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
+[project.urls]
+Homepage = "https://github.com/fakeskyline/puragram"
+Source = "https://github.com/fakeskyline/puragram"
+Issues = "https://github.com/fakeskyline/puragram/issues"
+Changelog = "https://github.com/fakeskyline/puragram/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = ["pytest>=7"]

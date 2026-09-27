@@ -7,7 +7,9 @@ from .exceptions import (
 from .logger import get_logger, setup_logging, quiet
 
 from .types import (
-    CallbackQuery, Chat, Message, Update, User,
+    CallbackQuery, Chat, InlineQuery, Message, Update, User,
+    InlineQueryResultArticle, InlineQueryResultPhoto,
+    InlineQueryResultGif,
 )
 from .keyboards import (
     ForceReply, InlineKeyboardBuilder, InlineKeyboardButton,
@@ -15,8 +17,8 @@ from .keyboards import (
     ReplyKeyboardMarkup,
 )
 from .filters import (
-    BaseFilter, CallbackData, ChatId, ChatType, Command,
-    ContentTypes, Func, Regexp, Text, UserId,
+    BaseFilter, CallbackData, CallbackDataPrefix, ChatId, ChatType,
+    Command, ContentTypes, Func, InlineQueryText, Regexp, Text, UserId,
 )
 from .fsm import (
     BaseStorage, FileStorage, FSMContext, MemoryStorage,
@@ -39,18 +41,21 @@ from .security import (
     MAX_UPLOAD_BYTES, MAX_WEBHOOK_BYTES, MAX_REGEX_LEN,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 __all__ = [
     "Bot", "TelegramAPI",
     "GrambotError", "TelegramError", "SecurityError",
     "ValidationError", "WebhookError",
     "Update", "Message", "Chat", "User", "CallbackQuery",
+    "InlineQuery", "InlineQueryResultArticle",
+    "InlineQueryResultPhoto", "InlineQueryResultGif",
     "InlineKeyboardMarkup", "InlineKeyboardButton",
     "ReplyKeyboardMarkup", "KeyboardButton",
     "ForceReply", "RemoveKeyboard", "InlineKeyboardBuilder",
     "BaseFilter", "Func", "Command", "Text", "ContentTypes",
     "ChatType", "ChatId", "UserId", "Regexp", "CallbackData",
+    "CallbackDataPrefix", "InlineQueryText",
     "FSMContext", "State", "StatesGroup",
     "BaseStorage", "MemoryStorage", "FileStorage", "SQLiteStorage",
     "BaseMiddleware", "LoggingMiddleware", "ThrottlingMiddleware",
