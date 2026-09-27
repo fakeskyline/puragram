@@ -5,7 +5,7 @@ JSON, and Telegram bots from scratch, and explains every design decision
 inside `puragram`. Read it end-to-end once — you will understand not just
 this library, but how any Telegram bot framework works under the hood.
 
-Current version: **1.1.2**
+Current version: **1.2.0**
 
 ---
 
@@ -26,7 +26,8 @@ Current version: **1.1.2**
 13. [Testing your code](#13-testing-your-code)
 14. [Deploying a bot](#14-deploying-a-bot)
 15. [Inline mode and extra methods](#15-inline-mode-and-extra-methods)
-16. [Further reading](#16-further-reading)
+16. [Conversation handler](#16-conversation-handler)
+17. [Further reading](#17-further-reading)
 
 ---
 
@@ -873,7 +874,172 @@ Bot Settings -> Inline Mode -> Turn on.
 
 ---
 
-## 16. Further reading
+## 16. Conversation handler
+
+`puragram` ships with a **conversation handler** — a way to write
+multi-step dialogs as a single function, using Python generators.
+
+### 16.1 Why not just FSM?
+
+FSM is powerful but verbose. A three-step dialog needs three states,
+three handlers, and shared data in a dict. The conversation handler
+keeps everything in one place:
+
+```python
+# FSM version — three states, three handlers
+class Form(StatesGroup):
+    name = State()
+    age = State()
+    city = State()
+
+@bot.message_handler(commands=["register"])
+def start(msg, data):
+    data["state"].set_state(Form.name)
+    bot.send_message(msg.chat.id, "Name?")
+
+@bot.message_handler(state=Form.name)
+def on_name(msg, data):
+    data["state"].update_data(name=msg.text)
+    data["state"].set_state(Form.age)
+    bot.send_message(msg.chat.id, "Age?")
+
+@bot.message_handler(state=Form.age)
+def on_age(msg, data):
+    data["state"].update_data(age=msg.text)
+    data["state"].set_state(Form.city)
+    bot.send_message(msg.chat.id, "City?")
+
+@bot.message_handler(state=Form.city)
+def on_city(msg, data):
+    info = data["state"].get_data()
+    data["state"].clear()
+    bot.send_message(msg.chat.id, f"{info['name']}, {info['age']}, {info['city']}")
+```
+
+```python
+# Conversation version — one function
+@bot.conversation(commands=["register"], timeout=300)
+def register(conv):
+    name = yield "Name?"
+    age = yield "Age?"
+    city = yield "City?"
+    conv.reply(f"{name}, {age}, {city}")
+```
+
+The second one is easier to read, easier to change, and behaves the
+same for the user.
+
+### 16.2 How it works
+
+1. The user sends `/register`. `puragram` runs your function until
+   the first `yield` and sends the yielded string.
+2. The user replies. The reply is sent **back into the generator**,
+   becoming the value of the `yield` expression.
+3. This continues until the function returns (dialog finished) or
+   raises `ConversationCancelled` (dialog aborted).
+
+Internally the handler uses `gen.send(text)` — same mechanism as any
+Python generator.
+
+### 16.3 Cancelling a conversation
+
+Two ways:
+
+**1. The user sends `/cancel`** — `puragram` handles this automatically.
+No code needed.
+
+**2. Your code raises the cancel**:
+
+```python
+@bot.conversation(commands=["order"])
+def order(conv):
+    size = yield "Size? (small/large)"
+    if size == "huge":
+        conv.cancel("Sorry, no huge pizzas.")
+        return
+    conv.reply(f"{size} pizza ordered.")
+```
+
+`conv.cancel(msg)` raises `ConversationCancelled(msg)` internally,
+sends the message, and stops the dialog.
+
+### 16.4 Timeout
+
+If the user goes silent, the conversation is auto-cancelled. Default
+timeout is 300 seconds. Set per-conversation:
+
+```python
+@bot.conversation(commands=["survey"], timeout=60)
+def survey(conv):
+    rating = yield "Rate 1-10?"
+    conv.reply(f"Thanks: {rating}")
+```
+
+Set `timeout=None` to disable the timeout entirely.
+
+### 16.5 Branching
+
+Conversations can branch like any Python code:
+
+```python
+@bot.conversation(commands=["order"])
+def order(conv):
+    kind = yield "Pizza or burger?"
+    if kind == "pizza":
+        cheese = yield "Extra cheese? (yes/no)"
+        conv.reply(f"Pizza, extra cheese: {cheese}")
+    elif kind == "burger":
+        sauce = yield "Which sauce?"
+        conv.reply(f"Burger with {sauce}")
+    else:
+        conv.cancel("Unknown option.")
+```
+
+For deeply branching flows with many states, FSM may be clearer.
+For **linear** dialogs (register, order, survey), conversations win.
+
+### 16.6 Isolated per user
+
+Each `(chat_id, user_id)` has its own conversation instance. In a
+group chat, two users can run the same conversation independently.
+
+### 16.7 `ConversationContext`
+
+Your function receives `conv` as the first argument. It has:
+
+- `conv.chat_id` — current chat id
+- `conv.user_id` — current user id
+- `conv.bot` — the `Bot` instance
+- `conv.data` — a plain dict for your own storage
+- `conv.reply(text)` — send a message immediately (do not yield)
+- `conv.cancel(message=None)` — cancel the conversation
+
+Use `conv.reply()` when you want to send extra messages without
+waiting for input:
+
+```python
+@bot.conversation(commands=["calc"])
+def calc(conv):
+    a = yield "First number?"
+    b = yield "Second number?"
+    conv.reply(f"Sum: {int(a) + int(b)}")
+```
+
+### 16.8 When to use conversation vs FSM
+
+| Use conversation for | Use FSM for |
+|---|---|
+| Linear dialogs (register, order, survey) | Complex branching with many states |
+| Short flows (2-5 steps) | Long flows (10+ states) |
+| Everything in one place is easier | States that other handlers need to check |
+| Rapid prototyping | Persistent state across restarts |
+
+Both work. Pick the one that makes your code shorter.
+
+---
+
+
+## 17. Further reading
 
 ### Python
 
