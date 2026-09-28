@@ -1,4 +1,4 @@
-from puragram import Bot, RemoveKeyboard, State, StatesGroup
+from zeed import Bot, RemoveKeyboard, State, StatesGroup
 
 TOKEN = "YOUR_TOKEN_HERE"
 bot = Bot(TOKEN, parse_mode="HTML")

@@ -42,7 +42,7 @@ from .security import (
     MAX_UPLOAD_BYTES, MAX_WEBHOOK_BYTES, MAX_REGEX_LEN,
 )
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 __all__ = [
     "Bot", "TelegramAPI",

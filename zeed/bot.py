@@ -16,7 +16,7 @@ from .security import safe_path, check_size, validate_text
 from .types import Message, Update, User
 from .utils import split_message
 
-log = get_logger("puragram")
+log = get_logger("zeed")
 
 
 class _DedupCache:

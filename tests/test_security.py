@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-import puragram.security as sec
-from puragram import (
+import zeed.security as sec
+from zeed import (
     MAX_CALLBACK_DATA,
     MAX_CAPTION_LEN,
     MAX_MESSAGE_LEN,

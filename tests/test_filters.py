@@ -1,5 +1,5 @@
-from puragram import Command, ContentTypes, CallbackData, Regexp, Text
-from puragram.types import CallbackQuery, Message
+from zeed import Command, ContentTypes, CallbackData, Regexp, Text
+from zeed.types import CallbackQuery, Message
 
 
 def _msg(text=None, **extra):

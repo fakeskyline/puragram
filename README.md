@@ -1,15 +1,15 @@
-# puragram
+# zeed
 
 **Fast, dependency-light Telegram Bot API framework built on urllib3.**
 No aiohttp. No requests. No httpx.
 
-[![PyPI](https://img.shields.io/pypi/v/puragram.svg)](https://pypi.org/project/puragram/)
-[![Python](https://img.shields.io/pypi/pyversions/puragram.svg)](https://pypi.org/project/puragram/)
-[![License](https://img.shields.io/pypi/l/puragram.svg)](https://github.com/fakeskyline/puragram/blob/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/zeed.svg)](https://pypi.org/project/zeed/)
+[![Python](https://img.shields.io/pypi/pyversions/zeed.svg)](https://pypi.org/project/zeed/)
+[![License](https://img.shields.io/pypi/l/zeed.svg)](https://github.com/fakeskyline/zeed/blob/main/LICENSE)
 
-## Why puragram?
+## Why zeed?
 
-Most Telegram Python libraries pull in `aiohttp` or `requests`. puragram
+Most Telegram Python libraries pull in `aiohttp` or `requests`. zeed
 talks directly to the Telegram Bot API through `urllib3` with a keep-alive
 connection pool. That means:
 
@@ -20,7 +20,7 @@ connection pool. That means:
 ## Install
 
 ```bash
-pip install puragram
+pip install zeed
 ```
 
 Requires Python 3.9+.
@@ -28,7 +28,7 @@ Requires Python 3.9+.
 ## Quick start
 
 ```python
-from puragram import Bot
+from zeed import Bot
 
 bot = Bot("YOUR_TOKEN", parse_mode="HTML")
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
 ## FSM example
 
 ```python
-from puragram import Bot, RemoveKeyboard, State, StatesGroup
+from zeed import Bot, RemoveKeyboard, State, StatesGroup
 
 bot = Bot("YOUR_TOKEN", parse_mode="HTML")
 
@@ -87,7 +87,7 @@ bot.run_polling()
 ## Inline mode
 
 ```python
-from puragram import Bot, InlineQueryResultArticle
+from zeed import Bot, InlineQueryResultArticle
 
 bot = Bot("YOUR_TOKEN")
 
@@ -108,7 +108,7 @@ bot.run_polling()
 ## Middleware
 
 ```python
-from puragram import Bot, LoggingMiddleware, ThrottlingMiddleware
+from zeed import Bot, LoggingMiddleware, ThrottlingMiddleware
 
 bot = Bot("YOUR_TOKEN")
 bot.middleware(LoggingMiddleware())
@@ -124,7 +124,7 @@ bot.run_polling(workers=4)
 ## Webhook
 
 ```python
-from puragram import Bot, WebhookServer
+from zeed import Bot, WebhookServer
 
 bot = Bot("YOUR_TOKEN")
 
@@ -162,7 +162,7 @@ if __name__ == "__main__":
 
 Benchmarked on Termux (Android, same Wi-Fi, ~30 ms to Telegram, median of 3 trials):
 
-| Workload | puragram | pyTelegramBotAPI |
+| Workload | zeed | pyTelegramBotAPI |
 |---|---|---|
 | 5 × sendMessage | 85 ms/msg | 89 ms/msg |
 | 3 × sendPhoto | 99 ms/msg | 116 ms/msg |
@@ -182,10 +182,10 @@ Your results will vary with network latency.
 
 ## Documentation
 
-Full beginner's guide: [ABOUT.md](https://github.com/fakeskyline/puragram/blob/main/ABOUT.md).
+Full beginner's guide: [ABOUT.md](https://github.com/fakeskyline/zeed/blob/main/ABOUT.md).
 
-Changelog: [CHANGELOG.md](https://github.com/fakeskyline/puragram/blob/main/CHANGELOG.md).
+Changelog: [CHANGELOG.md](https://github.com/fakeskyline/zeed/blob/main/CHANGELOG.md).
 
 ## License
 
-MIT — see [LICENSE](https://github.com/fakeskyline/puragram/blob/main/LICENSE).
+MIT — see [LICENSE](https://github.com/fakeskyline/zeed/blob/main/LICENSE).

@@ -1,8 +1,8 @@
-# About puragram — Learn Python & Bots From Zero
+# About zeed — Learn Python & Bots From Zero
 
 This document is a full beginner's guide. It teaches you Python, HTTP,
 JSON, and Telegram bots from scratch, and explains every design decision
-inside `puragram`. Read it end-to-end once — you will understand not just
+inside `zeed`. Read it end-to-end once — you will understand not just
 this library, but how any Telegram bot framework works under the hood.
 
 Current version: **1.2.0**
@@ -16,7 +16,7 @@ Current version: **1.2.0**
 3. [HTTP in 10 minutes](#3-http-in-10-minutes)
 4. [JSON and data](#4-json-and-data)
 5. [How Telegram Bot API works](#5-how-telegram-bot-api-works)
-6. [Reading the puragram source](#6-reading-the-puragram-source)
+6. [Reading the zeed source](#6-reading-the-zeed-source)
 7. [Writing your first bot](#7-writing-your-first-bot)
 8. [Handlers, filters, and dispatch](#8-handlers-filters-and-dispatch)
 9. [Finite State Machines (FSM)](#9-finite-state-machines-fsm)
@@ -171,7 +171,7 @@ def hello():
 hello()   # prints "calling hello", then "hi"
 ```
 
-`@bot.message_handler(...)` in `puragram` is a decorator. It registers
+`@bot.message_handler(...)` in `zeed` is a decorator. It registers
 your function so the bot calls it when a matching message arrives.
 
 ### 2.10 Type hints
@@ -228,11 +228,11 @@ HTTP.
 ### 3.4 Keep-alive
 
 Opening a new TCP + TLS connection per request is slow (~100 ms).
-`urllib3` keeps connections alive in a **pool**. `puragram` uses
+`urllib3` keeps connections alive in a **pool**. `zeed` uses
 `PoolManager` with `pool_size` connections. This is why it can be
 faster than naive code that opens a new connection every time.
 
-Starting from `puragram 1.1.1`, `PoolManager` is configured with
+Starting from `zeed 1.1.1`, `PoolManager` is configured with
 `block=True` (wait for a free connection), `TCP_NODELAY` (disable
 Nagle's algorithm for small JSON payloads), and `SO_KEEPALIVE`
 (keep connections open). Together these reduce latency and jitter.
@@ -265,7 +265,7 @@ data = json.loads('{"a": 1}')    # str to dict
 text = json.dumps({"a": 1})      # dict to str
 ```
 
-`puragram` parses every Telegram response into Python **dataclasses**
+`zeed` parses every Telegram response into Python **dataclasses**
 (`Message`, `Chat`, `User`, `CallbackQuery`) so you can write
 `msg.text` instead of `msg["text"]`.
 
@@ -318,7 +318,7 @@ before that offset and never returns it again.
 ### 5.4 Method names are camelCase
 
 Telegram API uses `getMe`, `sendMessage`, `getUpdates`. Python convention
-is `get_me`, `send_message`. `puragram` exposes the Python name and
+is `get_me`, `send_message`. `zeed` exposes the Python name and
 converts automatically via `_camel()` in `api.py`. This is a common
 source of confusion — if you get `404 Not Found`, check that the method
 name is being converted correctly.
@@ -331,15 +331,15 @@ Telegram limits:
 - ~20 messages per minute to a group
 - 429 Too Many Requests comes with `retry_after` seconds
 
-`puragram` does **not** retry on 429 by default. You should catch the
+`zeed` does **not** retry on 429 by default. You should catch the
 error and sleep before retrying. An unbounded retry loop would make
 things worse, not better.
 
 ---
 
-## 6. Reading the puragram source
+## 6. Reading the zeed source
 
-Open the `puragram/` folder and read files in this order:
+Open the `zeed/` folder and read files in this order:
 
 1. **`exceptions.py`** — what can go wrong
 2. **`security.py`** — all safety helpers
@@ -363,7 +363,7 @@ your own framework.
 ## 7. Writing your first bot
 
 ```python
-from puragram import Bot
+from zeed import Bot
 
 TOKEN = "1234567890:AAHxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 bot = Bot(TOKEN, parse_mode="HTML")
@@ -399,7 +399,7 @@ A **handler** is `(kind, function, filter, state)`.
 `edited_channel_post`, `callback_query`, `inline_query`.
 
 A **filter** decides whether a handler should run for a given update.
-`puragram` supports both keyword filters:
+`zeed` supports both keyword filters:
 
 ```python
 @bot.message_handler(commands=["start"], chat_types=["private"])
@@ -408,7 +408,7 @@ A **filter** decides whether a handler should run for a given update.
 and filter objects:
 
 ```python
-from puragram import Command, ChatType
+from zeed import Command, ChatType
 
 @bot.message_handler(Command("start") & ChatType("private"))
 ```
@@ -485,10 +485,10 @@ user_data = {}
 user_data[user_id] = {"step": "ask_name"}
 ```
 
-`puragram` FSM does this properly:
+`zeed` FSM does this properly:
 
 ```python
-from puragram import State, StatesGroup, MemoryStorage
+from zeed import State, StatesGroup, MemoryStorage
 
 class Form(StatesGroup):
     name = State()
@@ -509,7 +509,7 @@ def on_name(msg, data):
     bot.send_message(msg.chat.id, "Your age?")
 ```
 
-Note the second parameter `data`. `puragram` inspects your function
+Note the second parameter `data`. `zeed` inspects your function
 signature — if it has 2 or more parameters, the second one is a context
 dict with `bot`, `state`, and `update`.
 
@@ -549,7 +549,7 @@ Use cases:
 Example:
 
 ```python
-from puragram import ThrottlingMiddleware
+from zeed import ThrottlingMiddleware
 
 bot.middleware(ThrottlingMiddleware(rate=1.0))   # max 1 msg/sec/user
 ```
@@ -557,7 +557,7 @@ bot.middleware(ThrottlingMiddleware(rate=1.0))   # max 1 msg/sec/user
 Custom middleware:
 
 ```python
-from puragram import BaseMiddleware
+from zeed import BaseMiddleware
 
 class BanCheck(BaseMiddleware):
     def __init__(self, banned):
@@ -606,10 +606,10 @@ POST https://yourdomain.com/webhook   <- Telegram pushes updates here
 
 **Cons**: needs public HTTPS URL, certificate, server infrastructure.
 
-`puragram` provides `WebhookServer` on top of `http.server`:
+`zeed` provides `WebhookServer` on top of `http.server`:
 
 ```python
-from puragram import WebhookServer
+from zeed import WebhookServer
 
 bot = Bot(TOKEN)
 server = WebhookServer(
@@ -624,7 +624,7 @@ server.start(blocking=True)
 ```
 
 **Always set `secret_token`.** Telegram sends it in a header. If the
-header is missing or wrong, `puragram` returns `403 Forbidden` before
+header is missing or wrong, `zeed` returns `403 Forbidden` before
 touching your handlers. This blocks fake webhook POSTs from attackers.
 
 For local testing, use `cloudflared` or `ngrok` to expose your laptop:
@@ -643,7 +643,7 @@ A Telegram bot is a **public endpoint**. Anyone can:
 - Press its buttons
 - Post to its webhook URL
 
-`puragram` ships with defenses for common attacks.
+`zeed` ships with defenses for common attacks.
 
 ### 12.1 Path traversal
 
@@ -657,7 +657,7 @@ open(msg.text)          # DANGEROUS — user sends "../../etc/passwd"
 `/etc`, `/proc`, `/sys`, `/root`, `/dev`, or outside `base_dir`:
 
 ```python
-from puragram import safe_path
+from zeed import safe_path
 
 path = safe_path(msg.text, base_dir="/sdcard/uploads")
 with open(path, "rb") as f:
@@ -722,8 +722,8 @@ Write a test:
 
 ```python
 def test_command_filter():
-    from puragram import Command
-    from puragram.types import Message
+    from zeed import Command
+    from zeed.types import Message
 
     msg = Message.from_dict({
         "message_id": 1, "date": 0,
@@ -748,7 +748,7 @@ Rules of thumb:
 - Use `tmp_path` fixture for file tests
 - Aim for 80%+ coverage of critical code
 
-`puragram` itself has 84 tests covering filters, FSM, security, and
+`zeed` itself has 84 tests covering filters, FSM, security, and
 utilities.
 
 ---
@@ -812,7 +812,7 @@ GitHub Actions — only for scheduled tasks, not 24/7 polling.
 
 ## 15. Inline mode and extra methods
 
-Since version 1.1.0, `puragram` supports **inline mode** and additional
+Since version 1.1.0, `zeed` supports **inline mode** and additional
 Bot API methods.
 
 ### 15.1 Inline mode
@@ -821,7 +821,7 @@ An **inline query** happens when a user types `@yourbot query` in any
 chat. Your bot returns a list of results the user can send.
 
 ```python
-from puragram import Bot, InlineQueryResultArticle
+from zeed import Bot, InlineQueryResultArticle
 
 bot = Bot("YOUR_TOKEN")
 
@@ -876,7 +876,7 @@ Bot Settings -> Inline Mode -> Turn on.
 
 ## 16. Conversation handler
 
-`puragram` ships with a **conversation handler** — a way to write
+`zeed` ships with a **conversation handler** — a way to write
 multi-step dialogs as a single function, using Python generators.
 
 ### 16.1 Why not just FSM?
@@ -931,7 +931,7 @@ same for the user.
 
 ### 16.2 How it works
 
-1. The user sends `/register`. `puragram` runs your function until
+1. The user sends `/register`. `zeed` runs your function until
    the first `yield` and sends the yielded string.
 2. The user replies. The reply is sent **back into the generator**,
    becoming the value of the `yield` expression.
@@ -945,7 +945,7 @@ Python generator.
 
 Two ways:
 
-**1. The user sends `/cancel`** — `puragram` handles this automatically.
+**1. The user sends `/cancel`** — `zeed` handles this automatically.
 No code needed.
 
 **2. Your code raises the cancel**:
@@ -1088,7 +1088,7 @@ Both work. Pick the one that makes your code shorter.
 
 ---
 
-## Appendix A — Why puragram exists
+## Appendix A — Why zeed exists
 
 Most Telegram Python libraries use `requests` or `aiohttp`:
 
@@ -1097,9 +1097,9 @@ Most Telegram Python libraries use `requests` or `aiohttp`:
 | `pyTelegramBotAPI` | `requests` | Simple, sync | Extra layers, larger deps |
 | `aiogram` | `aiohttp` | Fast, async | Steep curve, heavy |
 | `python-telegram-bot` | `httpx` | Feature-rich | Large, complex |
-| **`puragram`** | **`urllib3`** | **Lean, direct, secure** | **Young, fewer features** |
+| **`zeed`** | **`urllib3`** | **Lean, direct, secure** | **Young, fewer features** |
 
-`puragram` uses `urllib3.PoolManager` directly — the same layer `requests`
+`zeed` uses `urllib3.PoolManager` directly — the same layer `requests`
 wraps. Skipping `requests` cuts dependencies and per-call overhead.
 Sending JSON instead of form data is faster to serialize. Built-in
 security is a bonus nobody else ships.
@@ -1120,7 +1120,7 @@ security is a bonus nobody else ships.
 ## Appendix C — Cheat sheet
 
 ```python
-from puragram import Bot, Command, State, StatesGroup
+from zeed import Bot, Command, State, StatesGroup
 
 bot = Bot("TOKEN", parse_mode="HTML")
 

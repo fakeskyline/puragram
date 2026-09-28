@@ -1,4 +1,4 @@
-from puragram import Bot, InlineKeyboardMarkup, InlineKeyboardB>
+from zeed import Bot, InlineKeyboardMarkup, InlineKeyboardB>
 
 TOKEN = "YOUR_TOKEN_HERE"
 

@@ -24,7 +24,7 @@ class _RedactingFormatter(logging.Formatter):
         return super().format(record)
 
 
-def get_logger(name="puragram"):
+def get_logger(name="zeed"):
     return logging.getLogger(name)
 
 
@@ -34,7 +34,7 @@ def setup_logging(level=logging.INFO,
     handler = logging.StreamHandler(sys.stdout)
     formatter_cls = _RedactingFormatter if redact_secrets else logging.Formatter
     handler.setFormatter(formatter_cls(fmt, datefmt="%H:%M:%S"))
-    root = logging.getLogger("puragram")
+    root = logging.getLogger("zeed")
     root.handlers.clear()
     root.addHandler(handler)
     root.setLevel(level)
@@ -43,4 +43,4 @@ def setup_logging(level=logging.INFO,
 
 
 def quiet():
-    logging.getLogger("puragram").setLevel(logging.CRITICAL)
+    logging.getLogger("zeed").setLevel(logging.CRITICAL)

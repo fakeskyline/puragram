@@ -1,9 +1,9 @@
-from puragram import (
+from zeed import (
     CallbackDataPrefix, InlineQuery, InlineQueryText,
     InlineQueryResultArticle, InlineQueryResultPhoto,
     InlineQueryResultGif,
 )
-from puragram.types import CallbackQuery
+from zeed.types import CallbackQuery
 
 
 def _cb(data):
@@ -163,7 +163,7 @@ def test_gif_to_dict():
 # ─── Update with inline_query ───
 
 def test_update_parses_inline_query():
-    from puragram import Update
+    from zeed import Update
     u = Update.from_dict({
         "update_id": 1,
         "inline_query": {
@@ -180,7 +180,7 @@ def test_update_parses_inline_query():
 # ─── send_long_message (без сети — проверяем split_message) ───
 
 def test_split_message_for_long_message():
-    from puragram import split_message
+    from zeed import split_message
     text = "a" * 10000
     parts = split_message(text)
     assert len(parts) > 1

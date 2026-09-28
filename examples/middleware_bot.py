@@ -1,6 +1,6 @@
 import logging
 
-from puragram import (
+from zeed import (
     Bot, LoggingMiddleware, ThrottlingMiddleware, TimingMiddleware,
     setup_logging,
 )

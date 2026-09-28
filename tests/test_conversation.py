@@ -1,13 +1,13 @@
 """Tests for the conversation handler."""
 import pytest
 
-from puragram import (
+from zeed import (
     Bot,
     ConversationCancelled,
     ConversationContext,
 )
-from puragram.conversation import ConversationManager
-from puragram.types import Message
+from zeed.conversation import ConversationManager
+from zeed.types import Message
 
 
 def _msg(text="", chat_id=1, user_id=1):
@@ -189,7 +189,7 @@ def test_non_generator_rejected(caplog):
         return "not a generator"
 
     entry_filter, timeout, func, name = None, 60, flow, "flow"
-    from puragram.conversation import _ConversationEntry
+    from zeed.conversation import _ConversationEntry
     entry = _ConversationEntry(entry_filter, timeout, func, name)
     mgr.start(_msg("/start"), entry)
     # No messages sent, no crash
@@ -239,7 +239,7 @@ def test_timeout_sends_notification(monkeypatch):
         return fake_now[0]
 
     monkeypatch.setattr(
-        "puragram.conversation.time.monotonic", fake_monotonic
+        "zeed.conversation.time.monotonic", fake_monotonic
     )
 
     # has_active should detect expiry and notify
@@ -261,7 +261,7 @@ def test_timeout_clears_active(monkeypatch):
 
     fake_now = [time.monotonic() + 999]
     monkeypatch.setattr(
-        "puragram.conversation.time.monotonic", lambda: fake_now[0]
+        "zeed.conversation.time.monotonic", lambda: fake_now[0]
     )
 
     mgr.has_active(_msg("x"))  # triggers cleanup
@@ -370,7 +370,7 @@ def test_no_timeout_does_not_expire(monkeypatch):
 
     fake_now = [time.monotonic() + 99999]
     monkeypatch.setattr(
-        "puragram.conversation.time.monotonic", lambda: fake_now[0]
+        "zeed.conversation.time.monotonic", lambda: fake_now[0]
     )
 
     assert mgr.has_active(_msg("x")) is True

@@ -1,4 +1,4 @@
-from puragram import escape_html, escape_markdown, split_message
+from zeed import escape_html, escape_markdown, split_message
 
 
 def test_escape_html():

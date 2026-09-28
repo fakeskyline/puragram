@@ -6,7 +6,7 @@ from .exceptions import TelegramError, SecurityError
 from .security import MAX_UPLOAD_BYTES, safe_filename
 from .logger import get_logger
 
-log = get_logger("puragram.api")
+log = get_logger("zeed.api")
 
 
 def _camel(name):

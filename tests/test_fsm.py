@@ -1,4 +1,4 @@
-from puragram import FSMContext, MemoryStorage, State, StatesGroup
+from zeed import FSMContext, MemoryStorage, State, StatesGroup
 
 
 class Form(StatesGroup):

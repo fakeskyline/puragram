@@ -1,7 +1,7 @@
 """Example: multi-step conversation using generators."""
 import logging
 
-from puragram import Bot, ConversationCancelled, setup_logging
+from zeed import Bot, ConversationCancelled, setup_logging
 
 setup_logging(level=logging.INFO)
 
@@ -37,7 +37,7 @@ def order_pizza(conv):
 
 @bot.conversation(commands=["survey"], timeout=600)
 def survey(conv):
-    rating = yield "How would you rate puragram from 1 to 10?"
+    rating = yield "How would you rate zeed from 1 to 10?"
     if rating == "0":
         conv.cancel("Thanks anyway.")
         return

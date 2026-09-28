@@ -3,7 +3,7 @@ import threading
 
 from .logger import get_logger
 
-log = get_logger("puragram.middleware")
+log = get_logger("zeed.middleware")
 
 
 class BaseMiddleware:

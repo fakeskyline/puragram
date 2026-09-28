@@ -3,6 +3,15 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.2] — 2026-09-28
+
+### Changed
+
+- Renamed from `puragram` to `zeed` to avoid confusion with the unrelated
+  `puregram` package. The API is unchanged.
+- New PyPI: https://pypi.org/project/zeed/
+- New GitHub: https://github.com/fakeskyline/zeed
+
 ## [1.2.1] — 2026-09-27
 
 ### Fixed
@@ -85,7 +94,7 @@ Notes
 
 ### Notes
 
-- Benchmarking shows puragram is now more predictable on flaky networks.
+- Benchmarking shows zeed is now more predictable on flaky networks.
   For applications that need retry on connection failures, pass
   `Bot(..., retries=2)` explicitly.
 
@@ -110,7 +119,7 @@ Notes
 
 ### Added
 
-- Initial public release as `puragram`
+- Initial public release as `zeed`
 - `Bot` with polling and dispatch
 - Handlers: message, edited_message, channel_post, edited_channel_post, callback_query
 - Filters: Command, Text, Regexp, ContentTypes, ChatType, ChatId, UserId, CallbackData, Func

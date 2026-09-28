@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "puragram"
-version = "1.2.1"
+name = "zeed"
+version = "1.2.2"
 description = "Fast, dependency-light Telegram Bot API framework built on urllib3"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -29,17 +29,17 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/fakeskyline/puragram"
-Source = "https://github.com/fakeskyline/puragram"
-Issues = "https://github.com/fakeskyline/puragram/issues"
-Changelog = "https://github.com/fakeskyline/puragram/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/fakeskyline/zeed"
+Source = "https://github.com/fakeskyline/zeed"
+Issues = "https://github.com/fakeskyline/zeed/issues"
+Changelog = "https://github.com/fakeskyline/zeed/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["puragram*"]
+include = ["zeed*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -13,7 +13,7 @@ import time
 
 from .logger import get_logger
 
-log = get_logger("puragram.conversation")
+log = get_logger("zeed.conversation")
 
 
 class _ConversationCancelled(Exception):

@@ -6,7 +6,7 @@ from .logger import get_logger
 from .security import MAX_WEBHOOK_BYTES, constant_time_eq
 from .types import Update
 
-log = get_logger("puragram.webhook")
+log = get_logger("zeed.webhook")
 
 
 class WebhookServer:
@@ -30,7 +30,7 @@ class WebhookServer:
         max_bytes = self.max_bytes
 
         class Handler(BaseHTTPRequestHandler):
-            server_version = "puragram"
+            server_version = "zeed"
             sys_version = ""
 
             def do_POST(self):
@@ -80,7 +80,7 @@ class WebhookServer:
 
             def do_GET(self):
                 if self.path == "/health":
-                    self._reply(200, {"ok": True, "bot": "puragram"})
+                    self._reply(200, {"ok": True, "bot": "zeed"})
                 else:
                     self._reply(404, {"ok": False})
 

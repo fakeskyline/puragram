@@ -1,4 +1,4 @@
-from puragram import Bot, WebhookServer
+from zeed import Bot, WebhookServer
 
 TOKEN = "YOUR_TOKEN_HERE"
 PUBLIC_URL = "https://your-public-url/webhook"
