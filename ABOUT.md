@@ -5,7 +5,7 @@ JSON, and Telegram bots from scratch, and explains every design decision
 inside `zeed`. Read it end-to-end once — you will understand not just
 this library, but how any Telegram bot framework works under the hood.
 
-Current version: **1.2.0**
+Current version: **1.2.2**
 
 ---
 
