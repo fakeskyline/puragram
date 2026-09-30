@@ -3,6 +3,33 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.0] — 2026-09-30
+
+### Added — Bot API 9.0–10.3 support
+
+- **Managed bots**: `get_managed_bot_token`, `replace_managed_bot_token`
+- **Checklists**: `send_checklist`, `edit_message_checklist`,
+  `Checklist`, `ChecklistTask` classes
+- **Topics in private chats**: `has_topics_enabled` in `User`
+- **Colored buttons and custom emoji**: `style` and
+  `icon_custom_emoji_id` in `InlineKeyboardButton` and `KeyboardButton`
+- **Message streaming**: `send_message_draft` for ChatGPT-style
+  character-by-character output
+- **Rich Messages**: `send_rich_message`, `RichMessageBlock` class
+- **Ephemeral messages**: `send_ephemeral_message` — visible only to
+  a specific user, disappears after reading
+- **Guest mode**: `guest_message_handler` for handling guest messages
+- New `guest_message` field in `Update`
+- New `ephemeral` flag in `Message`
+
+### Changed
+
+- Version bumped to 1.3.0
+
+### Notes
+
+- All new features are opt-in. Existing code works unchanged.
+
 ## [1.2.2] — 2026-09-28
 
 ### Changed

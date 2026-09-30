@@ -4,26 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zeed"
-version = "1.2.2"
-description = "Fast, dependency-light Telegram Bot API framework built on urllib3"
+version = "1.3.0"
+description = "Fast, dependency-light HTTP client and Telegram bot framework built on urllib3"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
     { name = "Maxim Zhovner", email = "zovnercukmaksim197@gmail.com" }
 ]
-license = "MIT"
-license-files = ["LICENSE"]
-keywords = ["telegram", "bot", "api", "urllib3", "framework", "async-free"]
+license = { text = "MIT" }
+keywords = ["http", "client", "urllib3", "telegram", "bot", "framework"]
 dependencies = ["urllib3>=2.0"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
     "Topic :: Communications :: Chat",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]

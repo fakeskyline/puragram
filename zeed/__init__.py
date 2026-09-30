@@ -1,13 +1,15 @@
+"""zeed — Telegram Bot API framework built on urllib3."""
 from .api import TelegramAPI
 from .bot import Bot
 from .exceptions import (
-    TelegramError, GrambotError, SecurityError,
+    TelegramError, ZeedError, SecurityError,
     ValidationError, WebhookError,
 )
 from .logger import get_logger, setup_logging, quiet
 
 from .types import (
     CallbackQuery, Chat, InlineQuery, Message, Update, User,
+    Checklist, ChecklistTask, RichMessageBlock,
     InlineQueryResultArticle, InlineQueryResultPhoto,
     InlineQueryResultGif,
 )
@@ -28,7 +30,6 @@ from .middleware import (
     BaseMiddleware, LoggingMiddleware, ThrottlingMiddleware,
     TimingMiddleware,
 )
-from .conversation import ConversationContext, ConversationCancelled
 from .webhook import WebhookServer
 from .utils import (
     chunked, escape_html, escape_markdown, safe_text,
@@ -42,15 +43,16 @@ from .security import (
     MAX_UPLOAD_BYTES, MAX_WEBHOOK_BYTES, MAX_REGEX_LEN,
 )
 
-__version__ = "1.2.2"
+__version__ = "1.3.0"
 
 __all__ = [
     "Bot", "TelegramAPI",
-    "GrambotError", "TelegramError", "SecurityError",
+    "ZeedError", "TelegramError", "SecurityError",
     "ValidationError", "WebhookError",
     "Update", "Message", "Chat", "User", "CallbackQuery",
     "InlineQuery", "InlineQueryResultArticle",
     "InlineQueryResultPhoto", "InlineQueryResultGif",
+    "Checklist", "ChecklistTask", "RichMessageBlock",
     "InlineKeyboardMarkup", "InlineKeyboardButton",
     "ReplyKeyboardMarkup", "KeyboardButton",
     "ForceReply", "RemoveKeyboard", "InlineKeyboardBuilder",
@@ -62,7 +64,6 @@ __all__ = [
     "BaseMiddleware", "LoggingMiddleware", "ThrottlingMiddleware",
     "TimingMiddleware",
     "WebhookServer",
-    "ConversationContext", "ConversationCancelled",
     "escape_html", "escape_markdown", "safe_text",
     "split_message", "chunked", "user_mention", "truncate",
     "redact", "mask_token", "safe_path", "safe_filename",

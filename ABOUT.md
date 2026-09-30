@@ -5,7 +5,7 @@ JSON, and Telegram bots from scratch, and explains every design decision
 inside `zeed`. Read it end-to-end once — you will understand not just
 this library, but how any Telegram bot framework works under the hood.
 
-Current version: **1.2.2**
+Current version: **1.3.0**
 
 ---
 
@@ -27,8 +27,8 @@ Current version: **1.2.2**
 14. [Deploying a bot](#14-deploying-a-bot)
 15. [Inline mode and extra methods](#15-inline-mode-and-extra-methods)
 16. [Conversation handler](#16-conversation-handler)
-17. [Further reading](#17-further-reading)
-
+17. [Bot API 9.0-10.3 features](#17-bot-api-90-103-features)
+18. [Further reading](#18-further-reading)
 ---
 
 ## 1. What is a Telegram bot
@@ -1056,7 +1056,181 @@ Both work. Pick the one that makes your code shorter.
 
 ---
 
-## 17. Further reading
+## 17. Bot API 9.0-10.3 features
+
+`zeed 1.3.0` adds support for the newest Bot API features.
+
+### 17.1 Colored buttons and custom emoji (Bot API 9.4)
+
+`InlineKeyboardButton` and `KeyboardButton` accept `style` and
+`icon_custom_emoji_id`:
+
+```python
+from zeed import InlineKeyboardButton, InlineKeyboardMarkup
+
+kb = InlineKeyboardMarkup().row(
+    InlineKeyboardButton("Confirm", callback_data="yes", style="success"),
+    InlineKeyboardButton("Delete", callback_data="no", style="danger"),
+    InlineKeyboardButton("Info", callback_data="i", style="primary"),
+)
+bot.send_message(chat_id, "Choose:", reply_markup=kb)
+```
+
+**Available styles:** `primary`, `secondary`, `success`, `danger`.
+
+**Custom emoji** requires the bot owner to have Telegram Premium:
+
+```python
+InlineKeyboardButton("Star", callback_data="x",
+                     icon_custom_emoji_id="5368324170671202286")
+```
+
+Invalid style raises `ValidationError` immediately — you will catch typos
+before sending.
+
+### 17.2 Checklists (Bot API 9.0)
+
+Native checklists with tasks that users can tick off:
+
+```python
+from zeed import Checklist, ChecklistTask
+
+cl = Checklist("Shopping", [
+    ChecklistTask("Bread", is_completed=True),
+    ChecklistTask("Eggs"),
+    ChecklistTask("Milk"),
+])
+bot.send_checklist(chat_id, cl)
+```
+
+Edit an existing checklist:
+
+```python
+bot.edit_message_checklist(chat_id, message_id, new_checklist)
+```
+
+### 17.3 Message streaming / drafts (Bot API 9.3)
+
+For ChatGPT-style character-by-character output:
+
+```python
+draft_id = int(time.time())
+text = "Generating a long answer..."
+for i in range(1, len(text) + 1, 5):
+    bot.send_message_draft(chat_id, draft_id, text[:i])
+    time.sleep(0.1)
+bot.send_message(chat_id, text)  # commit final message
+```
+
+The user sees the text growing in real time. Drafts are temporary —
+call `send_message` at the end to keep the final version.
+
+### 17.4 Ephemeral messages (Bot API 10.3)
+
+Messages visible to only one user, disappearing after they read it:
+
+```python
+bot.send_ephemeral_message(
+    chat_id,
+    "Only you can see this. It disappears after reading.",
+    receiver_user_id=msg.from_user.id,
+)
+```
+
+Or as a reply to a button press:
+
+```python
+@bot.callback_query_handler(func=lambda q: q.data == "secret")
+def on_secret(q):
+    bot.answer_callback_query(q.id)
+    bot.send_ephemeral_message(
+        q.message.chat.id,
+        "Secret info",
+        callback_query_id=q.id,
+    )
+```
+
+Exactly one of `receiver_user_id` or `callback_query_id` is required.
+Otherwise `ZeedError` is raised.
+
+### 17.5 Rich Messages (Bot API 10.0)
+
+Block-based structured messages — headings, paragraphs, lists, tables:
+
+```python
+from zeed import RichMessageBlock
+
+blocks = [
+    RichMessageBlock(type="heading", content={"text": "Report"}),
+    RichMessageBlock(type="paragraph",
+                     content={"text": "Here is a summary."}),
+    RichMessageBlock(type="list",
+                     content={"items": ["First", "Second", "Third"]}),
+]
+bot.send_rich_message(chat_id, blocks)
+```
+
+Each block has `type` and a content dictionary. Types are defined by
+Telegram — see the Bot API reference for the full list.
+
+### 17.6 Managed bots (Bot API 9.6)
+
+A "master bot" can create and control other bots. Get or replace the
+token of a managed bot:
+
+```python
+token = bot.get_managed_bot_token(bot_id=1234567890)
+bot.replace_managed_bot_token(bot_id=1234567890, token=new_token)
+```
+
+Useful for platforms that spawn a bot per user.
+
+### 17.7 Topics in private chats (Bot API 9.2)
+
+Users with Premium can enable topics in 1-on-1 chats with your bot.
+The `User` object now carries `has_topics_enabled`:
+
+```python
+@bot.message_handler(commands=["start"])
+def start(msg):
+    if msg.from_user.has_topics_enabled:
+        bot.send_message(msg.chat.id, "Topics are on — nice!")
+    else:
+        bot.send_message(msg.chat.id, "Topics are off.")
+```
+
+### 17.8 Guest mode (Bot API 10.0)
+
+Bots can be added to any chat as guests. Their messages arrive as
+`guest_message` in `Update`:
+
+```python
+@bot.guest_message_handler()
+def on_guest(msg):
+    # msg is a dict, not Message — guest messages have a different shape
+    print(msg)
+```
+
+### 17.9 What's not supported (yet)
+
+`zeed` aims to stay sync and dependency-light. The following Bot API
+features are intentionally out of scope:
+
+- **Web Apps** — requires browser JS; not a bot-side API
+- **Payments** — available via `bot.call("sendInvoice", ...)` manually
+- **Passport** — rarely used; also callable manually
+
+For any Bot API method not wrapped as a Python method, use `bot.call`:
+
+```python
+result = bot.call("someNewMethod", param1=1, param2="x")
+```
+
+That way you are never blocked when Telegram adds something new.
+
+---
+
+## 18. Further reading
 
 ### Python
 

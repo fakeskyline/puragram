@@ -1,3 +1,5 @@
+"""Bot client for the Telegram Bot API with support for recent features."""
+
 import inspect
 import io
 import os
@@ -10,7 +12,6 @@ from .api import TelegramAPI
 from .exceptions import TelegramError, SecurityError
 from .filters import _ensure as _ensure_filter, build_named
 from .fsm import FSMContext, MemoryStorage
-from .conversation import ConversationManager
 from .logger import get_logger
 from .security import safe_path, check_size, validate_text
 from .types import Message, Update, User
@@ -39,12 +40,10 @@ class _DedupCache:
 def _open_file(source, base_dir=None):
     if hasattr(source, "read"):
         return source, False
-
     if isinstance(source, (bytes, bytearray)):
         if len(source) > 50 * 1024 * 1024:
             raise SecurityError("Bytes too large for upload")
         return io.BytesIO(bytes(source)), True
-
     if isinstance(source, str):
         if source.startswith(("http://", "https://")):
             return None, False
@@ -53,7 +52,6 @@ def _open_file(source, base_dir=None):
             check_size(p)
             return open(p, "rb"), True
         return None, False
-
     return None, False
 
 
@@ -102,9 +100,8 @@ class Bot:
         self._executor = None
         self._dedup = _DedupCache()
         self._allowed_updates_override = allowed_updates
-        self.conversations = ConversationManager(self)
 
-    # ─────────── Реєстрація хендлерів ───────────
+    # ─────────── Handler registration ───────────
 
     def _register(self, kind, custom_filters, state, named):
         f = build_named(**named)
@@ -135,30 +132,27 @@ class Bot:
     def inline_query_handler(self, *filters, state=None, **named):
         return self._register("inline_query", filters, state, named)
 
-    def conversation(self, *filters, timeout=300, **named):
-        """Register a conversation entry point.
+    def guest_message_handler(self, *filters, state=None, **named):
+        return self._register("guest_message", filters, state, named)
 
-        Usage:
-            @bot.conversation(commands=["start"], timeout=300)
-            def reg(conv):
-                name = yield "Your name?"
-                conv.reply(f"Hi {name}!")
-        """
+    def middleware(self, mw):
+        self._middlewares.append(mw)
+        return mw
+
+    def conversation(self, *filters, timeout=300, **named):
         f = build_named(**named)
         for cf in filters:
             cf = _ensure_filter(cf)
             f = cf if f is None else (f & cf)
 
         def deco(func):
-            self.conversations.add_entry(f, timeout, func)
+            if not hasattr(self, "_conversations"):
+                self._conversations = []
+            self._conversations.append((f, timeout, func))
             return func
         return deco
 
-    def middleware(self, mw):
-        self._middlewares.append(mw)
-        return mw
-
-    # ─────────── API методи ───────────
+    # ─────────── API methods ───────────
 
     def _defaults(self, kwargs):
         if self.parse_mode and "parse_mode" not in kwargs:
@@ -180,13 +174,87 @@ class Bot:
         ))
 
     def send_long_message(self, chat_id, text, **kwargs):
-        """Splits long text into chunks and sends each. Returns list of Message."""
         validate_text(text)
         chunks = split_message(text)
         results = []
         for chunk in chunks:
             results.append(self.send_message(chat_id, chunk, **kwargs))
         return results
+
+    def send_message_draft(self, chat_id, draft_id, text, **kwargs):
+        validate_text(text)
+        return Message.from_dict(self.api.call(
+            "send_message_draft", **self._defaults({
+                "chat_id": chat_id,
+                "draft_id": draft_id,
+                "text": text,
+                **kwargs,
+            })
+        ))
+
+    def send_ephemeral_message(self, chat_id, text,
+                               receiver_user_id=None,
+                               callback_query_id=None,
+                               **kwargs):
+        validate_text(text)
+        if receiver_user_id is None and callback_query_id is None:
+            raise SecurityError(
+                "receiver_user_id or callback_query_id required"
+            )
+        params = self._defaults({
+            "chat_id": chat_id,
+            "text": text,
+            **kwargs,
+        })
+        if receiver_user_id is not None:
+            params["receiver_user_id"] = int(receiver_user_id)
+        if callback_query_id is not None:
+            params["callback_query_id"] = callback_query_id
+        res = self.api.call("send_ephemeral_message", **params)
+        return Message.from_dict(res) if isinstance(res, dict) else res
+
+    def send_rich_message(self, chat_id, blocks, **kwargs):
+        if not isinstance(blocks, list):
+            raise SecurityError("blocks must be a list")
+        serialized = [
+            b.to_dict() if hasattr(b, "to_dict") else b for b in blocks
+        ]
+        return Message.from_dict(self.api.call(
+            "send_rich_message", **self._defaults({
+                "chat_id": chat_id,
+                "blocks": serialized,
+                **kwargs,
+            })
+        ))
+
+    def send_checklist(self, chat_id, checklist, **kwargs):
+        data = checklist.to_dict() if hasattr(checklist, "to_dict") else checklist
+        return Message.from_dict(self.api.call(
+            "send_checklist", **self._defaults({
+                "chat_id": chat_id,
+                "checklist": data,
+                **kwargs,
+            })
+        ))
+
+    def edit_message_checklist(self, chat_id, message_id, checklist, **kwargs):
+        data = checklist.to_dict() if hasattr(checklist, "to_dict") else checklist
+        return Message.from_dict(self.api.call(
+            "edit_message_checklist", **self._defaults({
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "checklist": data,
+                **kwargs,
+            })
+        ))
+
+    def get_managed_bot_token(self, bot_id):
+        return self.api.call("get_managed_bot_token", bot_id=bot_id)
+
+    def replace_managed_bot_token(self, bot_id, token):
+        return self.api.call(
+            "replace_managed_bot_token", bot_id=bot_id, token=token
+        )
 
     def edit_message_text(self, text, chat_id=None, message_id=None,
                           inline_message_id=None, **kwargs):
@@ -241,11 +309,6 @@ class Bot:
     def answer_inline_query(self, inline_query_id, results,
                             cache_time=300, is_personal=False,
                             next_offset=None, button=None):
-        """Answers an inline query with results.
-
-        `results` is a list of objects with to_dict() (e.g. InlineQueryResultArticle)
-        or plain dicts.
-        """
         serialized = [
             r.to_dict() if hasattr(r, "to_dict") else r for r in results
         ]
@@ -285,7 +348,7 @@ class Bot:
     def call(self, method, **params):
         return self.api.call(method, **params)
 
-    # ─────────── Файли ───────────
+    # ─────────── Files ───────────
 
     def _send_file(self, method, chat_id, field_name, source,
                    caption=None, **kwargs):
@@ -328,8 +391,6 @@ class Bot:
     def send_sticker(self, chat_id, sticker, **kwargs):
         return self._send_file("send_sticker", chat_id, "sticker", sticker,
                                **kwargs)
-
-    # ─────────── Нові методи ───────────
 
     def send_poll(self, chat_id, question, options, is_anonymous=True,
                   type="regular", allows_multiple_answers=False,
@@ -474,23 +535,7 @@ class Bot:
         kinds = {h.kind for h in self._handlers}
         return list(kinds) if kinds else None
 
-    # ─────────── Диспетчер ───────────
-
     def _dispatch(self, update):
-        msg = update.message
-        if msg is not None and self.conversations.has_entries:
-            text = getattr(msg, "text", None) or ""
-            if text.startswith("/cancel"):
-                if self.conversations.cancel(msg):
-                    return
-            if self.conversations.has_active(msg):
-                if self.conversations.resume(msg):
-                    return
-            for entry in self.conversations.entries():
-                if entry.entry_filter is None or entry.entry_filter(msg):
-                    self.conversations.start(msg, entry)
-                    return
-
         pairs = (
             ("message", update.message),
             ("edited_message", update.edited_message),
@@ -498,6 +543,7 @@ class Bot:
             ("edited_channel_post", update.edited_channel_post),
             ("callback_query", update.callback_query),
             ("inline_query", update.inline_query),
+            ("guest_message", update.guest_message),
         )
         for kind, obj in pairs:
             if obj is None:

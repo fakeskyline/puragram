@@ -1,3 +1,5 @@
+"""Telegram types with support for recent Bot API additions."""
+
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -10,6 +12,8 @@ class User:
     last_name: Optional[str] = None
     username: Optional[str] = None
     language_code: Optional[str] = None
+    is_premium: bool = False
+    has_topics_enabled: bool = False
     raw: dict = field(default_factory=dict)
 
     @classmethod
@@ -21,6 +25,8 @@ class User:
             last_name=d.get("last_name"),
             username=d.get("username"),
             language_code=d.get("language_code"),
+            is_premium=d.get("is_premium", False),
+            has_topics_enabled=d.get("has_topics_enabled", False),
             raw=d,
         )
 
@@ -33,6 +39,7 @@ class Chat:
     username: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    is_forum: bool = False
     raw: dict = field(default_factory=dict)
 
     @classmethod
@@ -44,6 +51,7 @@ class Chat:
             username=d.get("username"),
             first_name=d.get("first_name"),
             last_name=d.get("last_name"),
+            is_forum=d.get("is_forum", False),
             raw=d,
         )
 
@@ -59,7 +67,61 @@ _CONTENT_TYPES = (
     "proximity_alert_triggered", "video_chat_scheduled",
     "video_chat_started", "video_chat_ended",
     "video_chat_participants_invited", "web_app_data",
+    "checklist", "rich_message", "ephemeral_message",
 )
+
+
+@dataclass
+class ChecklistTask:
+    text: str
+    is_completed: bool = False
+
+    def to_dict(self):
+        return {"text": self.text, "is_completed": self.is_completed}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            text=d.get("text", ""),
+            is_completed=d.get("is_completed", False),
+        )
+
+
+@dataclass
+class Checklist:
+    title: str
+    tasks: list = field(default_factory=list)
+
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "tasks": [
+                t.to_dict() if hasattr(t, "to_dict") else t
+                for t in self.tasks
+            ],
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            title=d.get("title", ""),
+            tasks=[ChecklistTask.from_dict(t) for t in d.get("tasks", [])],
+        )
+
+
+@dataclass
+class RichMessageBlock:
+    type: str
+    content: dict = field(default_factory=dict)
+
+    def to_dict(self):
+        return {"type": self.type, **self.content}
+
+    @classmethod
+    def from_dict(cls, d):
+        d = dict(d)
+        kind = d.pop("type", "paragraph")
+        return cls(type=kind, content=d)
 
 
 @dataclass
@@ -73,6 +135,7 @@ class Message:
     entities: Optional[list] = None
     caption_entities: Optional[list] = None
     reply_to_message: Optional["Message"] = None
+    ephemeral: bool = False
     raw: dict = field(default_factory=dict)
 
     @property
@@ -95,6 +158,7 @@ class Message:
             caption_entities=d.get("caption_entities"),
             reply_to_message=(Message.from_dict(d["reply_to_message"])
                               if "reply_to_message" in d else None),
+            ephemeral=d.get("ephemeral", False),
             raw=d,
         )
 
@@ -182,6 +246,7 @@ class Update:
     shipping_query: Optional[dict] = None
     pre_checkout_query: Optional[dict] = None
     poll: Optional[dict] = None
+    guest_message: Optional[dict] = None
     raw: dict = field(default_factory=dict)
 
     @classmethod
@@ -203,11 +268,10 @@ class Update:
             shipping_query=d.get("shipping_query"),
             pre_checkout_query=d.get("pre_checkout_query"),
             poll=d.get("poll"),
+            guest_message=d.get("guest_message"),
             raw=d,
         )
 
-
-# ─── Inline query result types ───
 
 @dataclass
 class InlineQueryResultArticle:

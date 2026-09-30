@@ -143,20 +143,33 @@ if __name__ == "__main__":
     server.install("https://your-domain.com/webhook")
     server.start(blocking=True)
 ```
-
 ## Features
 
 - Long-polling and webhook (pure stdlib `http.server`)
 - Inline mode: `@yourbot query` with results
 - FSM: `State`, `StatesGroup`, `MemoryStorage`, `FileStorage`, `SQLiteStorage`
+- Conversation handler using Python generators
 - Middleware: logging, throttling, timing
-- Filters: `Command`, `Text`, `Regexp`, `ContentTypes`, `ChatType`, `ChatId`, `UserId`, `CallbackData`, `CallbackDataPrefix`, `Func`
+- Filters: `Command`, `Text`, `Regexp`, `ContentTypes`, `ChatType`,
+  `ChatId`, `UserId`, `CallbackData`, `CallbackDataPrefix`, `Func`
 - Filter operators: `&` (and), `|` (or), `~` (not)
 - File sending: photo, document, video, audio, voice, sticker
 - Extras: poll, location, contact, dice
 - Auto-split for long messages: `send_long_message`
-- Security: path traversal guard, size limits, ReDoS protection, token redaction, dedup, safe SQLite
+- Security: path traversal guard, size limits, ReDoS protection,
+  token redaction, dedup, safe SQLite
 - Zero dependencies except `urllib3`
+
+## Bot API 9.0–10.3 features (zeed 1.3.0+)
+
+- **Managed bots** — `get_managed_bot_token`, `replace_managed_bot_token`
+- **Checklists** — `send_checklist`, `edit_message_checklist`
+- **Colored buttons** — `InlineKeyboardButton(..., style="primary")`
+- **Custom emoji** — `icon_custom_emoji_id` in buttons
+- **Message streaming** — `send_message_draft` (ChatGPT-style)
+- **Rich Messages** — `send_rich_message` with `RichMessageBlock`
+- **Ephemeral messages** — `send_ephemeral_message` (visible only to one user)
+- **Guest mode** — `guest_message_handler`
 
 ## Performance
 

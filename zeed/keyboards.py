@@ -1,22 +1,22 @@
-from .security import validate_callback_data
+"""Keyboards with support for Bot API 9.4 colored buttons and custom emoji."""
+
 from .exceptions import ValidationError
 
-
-def _to_dict(obj):
-    return obj.to_dict() if hasattr(obj, "to_dict") else obj
+_STYLES = ("primary", "secondary", "success", "danger")
 
 
 class InlineKeyboardButton:
-    def __init__(self, text, callback_data=None, url=None, web_app=None,
-                 login_url=None, switch_inline_query=None,
+    def __init__(self, text, callback_data=None, url=None,
+                 web_app=None, login_url=None,
+                 switch_inline_query=None,
                  switch_inline_query_current_chat=None,
-                 callback_game=None, pay=None, **extra):
+                 callback_game=None, pay=None,
+                 icon_custom_emoji_id=None, style=None, **extra):
         if not text or not isinstance(text, str):
             raise ValidationError("Button text required")
         self.data = {"text": text[:64]}
 
         if callback_data is not None:
-            validate_callback_data(callback_data)
             self.data["callback_data"] = callback_data
         if url is not None:
             if not (url.startswith("https://") or url.startswith("tg://")):
@@ -35,6 +35,12 @@ class InlineKeyboardButton:
             self.data["callback_game"] = callback_game
         if pay is not None:
             self.data["pay"] = pay
+        if icon_custom_emoji_id is not None:
+            self.data["icon_custom_emoji_id"] = icon_custom_emoji_id
+        if style is not None:
+            if style not in _STYLES:
+                raise ValidationError(f"style must be one of {_STYLES}")
+            self.data["style"] = style
         self.data.update(extra)
 
     def to_dict(self):
@@ -60,7 +66,8 @@ class InlineKeyboardMarkup:
 
 class KeyboardButton:
     def __init__(self, text, request_contact=None, request_location=None,
-                 request_poll=None, web_app=None, **extra):
+                 request_poll=None, web_app=None,
+                 icon_custom_emoji_id=None, style=None, **extra):
         if not text:
             raise ValidationError("Button text required")
         self.data = {"text": str(text)[:64]}
@@ -72,6 +79,12 @@ class KeyboardButton:
             self.data["request_poll"] = request_poll
         if web_app is not None:
             self.data["web_app"] = web_app
+        if icon_custom_emoji_id is not None:
+            self.data["icon_custom_emoji_id"] = icon_custom_emoji_id
+        if style is not None:
+            if style not in _STYLES:
+                raise ValidationError(f"style must be one of {_STYLES}")
+            self.data["style"] = style
         self.data.update(extra)
 
     def to_dict(self):
@@ -155,3 +168,7 @@ class InlineKeyboardBuilder:
 
     def build(self):
         return InlineKeyboardMarkup(self._rows)
+
+
+def _to_dict(obj):
+    return obj.to_dict() if hasattr(obj, "to_dict") else obj
