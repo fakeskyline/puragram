@@ -3,6 +3,26 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.1] — 2026-09-30
+
+### Fixed
+
+- `send_message_draft` now rejects non-private chats and `draft_id=0`
+  before sending the request. Previously Telegram would return a
+  cryptic 400.
+- `send_ephemeral_message` now rejects private chats before sending
+  the request. Only groups and supergroups are valid.
+
+### Added
+
+- Docstrings with full limitations for both methods, based on the
+  official Bot API reference (9.5 / 10.3).
+- 7 unit tests for the new validation.
+
+### Notes
+
+- Behaviour unchanged for valid inputs.
+
 ## [1.3.0] — 2026-09-30
 
 ### Added — Bot API 9.0–10.3 support

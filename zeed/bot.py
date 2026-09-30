@@ -9,7 +9,7 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 
 from .api import TelegramAPI
-from .exceptions import TelegramError, SecurityError
+from .exceptions import TelegramError, SecurityError, ValidationError
 from .filters import _ensure as _ensure_filter, build_named
 from .fsm import FSMContext, MemoryStorage
 from .logger import get_logger
@@ -182,6 +182,22 @@ class Bot:
         return results
 
     def send_message_draft(self, chat_id, draft_id, text, **kwargs):
+        """Send a draft update for a streaming message.
+
+        Limitations (Bot API 9.5):
+          - Only private chats (positive chat_id).
+          - draft_id must be non-zero. Same draft_id animates edits;
+            a different one replaces without animation.
+          - Drafts live for 30 seconds and are not saved.
+            Call send_message() at the end to commit.
+        """
+        if chat_id <= 0:
+            raise ValidationError(
+                "send_message_draft only works in private chats "
+                "(chat_id must be positive)"
+            )
+        if not draft_id:
+            raise ValidationError("draft_id must be non-zero")
         validate_text(text)
         return Message.from_dict(self.api.call(
             "send_message_draft", **self._defaults({
@@ -196,9 +212,23 @@ class Bot:
                                receiver_user_id=None,
                                callback_query_id=None,
                                **kwargs):
+        """Send a message visible only to one user in a group.
+
+        Limitations (Bot API 10.3):
+          - Only groups and supergroups (negative chat_id).
+          - Exactly one of receiver_user_id or callback_query_id is
+            required, unless the bot is a chat admin.
+          - Delivery is not guaranteed if the user is offline.
+          - A reply is only accepted within 15 seconds.
+        """
+        if chat_id >= 0:
+            raise ValidationError(
+                "send_ephemeral_message only works in groups and "
+                "supergroups (chat_id must be negative)"
+            )
         validate_text(text)
         if receiver_user_id is None and callback_query_id is None:
-            raise SecurityError(
+            raise ValidationError(
                 "receiver_user_id or callback_query_id required"
             )
         params = self._defaults({

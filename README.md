@@ -160,7 +160,7 @@ if __name__ == "__main__":
   token redaction, dedup, safe SQLite
 - Zero dependencies except `urllib3`
 
-## Bot API 9.0–10.3 features (zeed 1.3.0+)
+## Bot API 9.0–10.3 features (zeed 1.3.0+, refined in 1.3.1)
 
 - **Managed bots** — `get_managed_bot_token`, `replace_managed_bot_token`
 - **Checklists** — `send_checklist`, `edit_message_checklist`
@@ -170,6 +170,19 @@ if __name__ == "__main__":
 - **Rich Messages** — `send_rich_message` with `RichMessageBlock`
 - **Ephemeral messages** — `send_ephemeral_message` (visible only to one user)
 - **Guest mode** — `guest_message_handler`
+
+### Chat-type limitations
+
+Two of the newest methods are restricted by Telegram, and `zeed 1.3.1`
+checks this **before** the request:
+
+| Method | Only works in |
+|---|---|
+| `send_message_draft` | **private chats** (positive `chat_id`) |
+| `send_ephemeral_message` | **groups / supergroups** (negative `chat_id`) |
+
+Invalid input raises `ValidationError` with a clear message instead of
+a cryptic HTTP 400.
 
 ## Performance
 

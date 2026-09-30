@@ -5,7 +5,7 @@ JSON, and Telegram bots from scratch, and explains every design decision
 inside `zeed`. Read it end-to-end once — you will understand not just
 this library, but how any Telegram bot framework works under the hood.
 
-Current version: **1.3.0**
+Current version: **1.3.1**
 
 ---
 
@@ -1227,6 +1227,77 @@ result = bot.call("someNewMethod", param1=1, param2="x")
 ```
 
 That way you are never blocked when Telegram adds something new.
+
+### 17.10 Limitations of streaming and ephemeral messages
+
+Both methods have **strict chat-type requirements** that Telegram enforces
+server-side. `zeed 1.3.1` validates them **before** sending the request,
+so you get a `ValidationError` instead of a cryptic HTTP 400.
+
+#### `send_message_draft` — private chats only
+
+| Requirement | Detail |
+|---|---|
+| Chat type | **Only private** (`chat_id > 0`) |
+| `draft_id` | Must be **non-zero** |
+| Lifetime | **30 seconds** per draft |
+| Commit | Call `send_message()` at the end with the full text |
+
+Sending a draft into a group raises `ValidationError` immediately:
+
+```python
+bot.send_message_draft(-100123456, 1, "hi")
+# ValidationError: send_message_draft only works in private chats
+```
+
+Sending with `draft_id=0` also raises:
+
+```python
+bot.send_message_draft(123456, 0, "hi")
+# ValidationError: draft_id must be non-zero
+```
+
+#### `send_ephemeral_message` — groups and supergroups only
+
+| Requirement | Detail |
+|---|---|
+| Chat type | **Only group / supergroup** (`chat_id < 0`) |
+| `receiver_user_id` OR `callback_query_id` | At least one is required (unless the bot is an admin) |
+| Delivery | **Not guaranteed** if the user is offline |
+| Reply window | **15 seconds** for a reply to be accepted |
+
+Sending an ephemeral message into a private chat raises:
+
+```python
+bot.send_ephemeral_message(123456, "hi", receiver_user_id=1)
+# ValidationError: send_ephemeral_message only works in groups and supergroups
+```
+
+Sending without a recipient identifier raises:
+
+```python
+bot.send_ephemeral_message(-100123456, "hi")
+# ValidationError: receiver_user_id or callback_query_id required
+```
+
+#### What is NOT required
+
+- **Premium bot** — neither method needs Premium
+- **Admin rights** — not required if `callback_query_id` is provided
+
+#### Streaming: what actually happens
+
+```python
+draft_id = int(time.time())
+for i in range(1, len(text) + 1, 5):
+    bot.send_message_draft(chat_id, draft_id, text[:i])
+    time.sleep(0.1)
+bot.send_message(chat_id, text)  # commit
+```
+
+The user sees growing text **in the same message slot** (as long as
+`draft_id` stays the same). When you call `send_message`, the draft
+disappears and the final message appears as a new message in the chat.
 
 ---
 
